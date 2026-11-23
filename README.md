@@ -57,6 +57,10 @@ Temporary add-ons are removed when Firefox restarts.
 - **Light up Meet's background** finds Meet's dark areas by colour and size, so it may stop working if Google redesigns Meet. It can also light the tiles of participants with their camera off.
 - The settings panel closes when the light window opens. Browsers close extension panels when they lose focus; open the panel again to keep adjusting.
 
+## Roadmap
+
+Support for other video call apps that run in the browser is planned: Microsoft Teams, Zoom and Jitsi Meet. [Vote with 👍 or help on issue #1](https://github.com/acasaism/ring-light/issues/1).
+
 ## Privacy
 
 The extension collects no data and makes no network requests. Your settings stay in your browser. See [PRIVACY.md](PRIVACY.md).
