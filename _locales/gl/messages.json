@@ -11,6 +11,12 @@
   "on": {
     "message": "Luz acesa"
   },
+  "auto": {
+    "message": "Acender coa cámara"
+  },
+  "autoHint": {
+    "message": "A luz vólvese apagar cando se apaga a cámara."
+  },
   "size": {
     "message": "Grosor"
   },

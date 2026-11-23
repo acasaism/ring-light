@@ -53,6 +53,17 @@ assert.strictEqual(manifest.background.service_worker, "background.js", "Chromiu
 // The Firefox ID can never change once published; the name is descriptive, not Google's brand
 assert.strictEqual(manifest.browser_specific_settings.gecko.id, "ring-light@acasaism.github.io", "permanent Firefox ID");
 assert.strictEqual(require("./_locales/en/messages.json").extName.message, "Ring Light for Google Meet", "store name");
+// camera.js must run in the page's own world, before Meet asks for the camera, to see its tracks
+const cameraScript = manifest.content_scripts.find((c) => c.js.includes("camera.js"));
+assert.ok(cameraScript, "camera.js is a content script");
+assert.deepStrictEqual(cameraScript.js, ["camera.js"], "camera.js in its own entry (the main world has no extension API)");
+assert.strictEqual(cameraScript.world, "MAIN", "camera.js runs in the page's main world");
+assert.strictEqual(cameraScript.run_at, "document_start", "camera.js runs before the page's scripts");
+assert.deepStrictEqual(cameraScript.matches, ["https://meet.google.com/*"], "camera.js only on Meet");
+assert.deepStrictEqual(manifest.permissions, ["storage"], "no new permissions");
+// The store zip lists its files one by one: every script the manifest loads must be in it
+const zipped = fs.readFileSync(__dirname + "/scripts/build.sh", "utf8").match(/^zip .*$/m)[0].split(/\s+/);
+for (const f of manifest.content_scripts.flatMap((c) => c.js)) assert.ok(zipped.includes(f), `build.sh packages ${f}`);
 for (const p of [...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon)])
   assert.ok(p.endsWith(".png") && fs.existsSync(__dirname + "/" + p), `PNG icon exists: ${p}`);
 
@@ -107,14 +118,24 @@ global.document = {
 global.DEFAULTS = DEFAULTS;
 global.lightColor = lightColor;
 global.isMeetingPath = isMeetingPath;
-global.location = { pathname: "/abc-defg-hij" };
+global.location = { pathname: "/abc-defg-hij", origin: "https://meet.google.com" };
+const pageEvents = {}; // window listeners: messages from camera.js, pagehide
+global.addEventListener = (type, fn) => (pageEvents[type] = fn);
 let poll;
 const sent = [];
 global.setInterval = (fn) => (poll = fn);
 global.browser = {
   runtime: { sendMessage: async (m) => sent.push(m) },
   storage: {
-    local: { get: async (d) => ({ ...d, ...stored }) },
+    local: {
+      get: async (d) => ({ ...d, ...stored }),
+      // like the browser: listeners get what changed
+      set: async (v) => {
+        const changes = Object.fromEntries(Object.entries(v).map(([k, newValue]) => [k, { oldValue: stored[k], newValue }]));
+        stored = { ...stored, ...v };
+        listener(changes);
+      },
+    },
     onChanged: { addListener: (fn) => (listener = fn) },
   },
 };
@@ -180,6 +201,171 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(body.style.transform + body.style.clipPath + html.style.background, "", "off restores page");
   assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "switch off: icon off");
 
+  // Turn on with the camera: camera.js (page world) reports the camera; content.js writes the global "on"
+  const camera = (on, media = on) => pageEvents.message({ origin: "https://meet.google.com", data: { ringLight: { camera: on, media } } });
+  const userSets = async (v) => { await browser.storage.local.set(v); await tick(); };
+  const realNow = Date.now;
+  let clock = 1e6;
+  Date.now = () => clock;
+  const wait = async (ms) => { clock += ms; poll(); await tick(); };
+  stored = { ...DEFAULTS, on: false };
+  listener(); await tick();
+  camera(true); await tick();
+  assert.strictEqual(stored.on, false, "option off (default): the camera does not touch the light");
+  camera(false); await tick();
+
+  await userSets({ auto: true });
+  assert.strictEqual(stored.on, false, "enabling the option without a camera changes nothing");
+  camera(true); await tick();
+  assert.strictEqual(stored.on, true, "camera starts in a meeting: light on");
+  assert.strictEqual(body.style.transform, "scale(0.85)", "with the current settings");
+  camera(true); await tick(); // heartbeat while the camera stays on
+  assert.strictEqual(stored.on, true, "stays on while the camera is on");
+  camera(false); await tick();
+  await wait(1000);
+  assert.strictEqual(stored.on, true, "camera off for 1 s: still on (Meet may be restarting the camera)");
+  camera(true); await tick();
+  await wait(1500);
+  camera(false); await tick();
+  await wait(1000);
+  assert.strictEqual(stored.on, true, "short gaps do not add up");
+  await wait(1000);
+  assert.strictEqual(stored.on, false, "camera off for 2 s: light off");
+  await wait(5000);
+  assert.strictEqual(stored.on, false, "stays off");
+
+  // Turned off by hand during the call: stays off until the camera starts again
+  camera(true); await tick();
+  assert.strictEqual(stored.on, true, "camera starts again: light on");
+  await userSets({ on: false }); // panel or shortcut
+  camera(true); await tick();
+  await wait(1000);
+  camera(true); await tick();
+  assert.strictEqual(stored.on, false, "manual off sticks while the camera stays on");
+  camera(false); await tick();
+  await wait(3000);
+  camera(true); await tick();
+  assert.strictEqual(stored.on, true, "camera starts again: light on again");
+  camera(false); await tick();
+  await wait(2000);
+  assert.strictEqual(stored.on, false, "and off with the camera");
+
+  // Turned on by hand: the camera never turns it off
+  await userSets({ on: true });
+  camera(true); await tick();
+  camera(false); await tick();
+  await wait(5000);
+  assert.strictEqual(stored.on, true, "light turned on by hand stays on when the camera stops");
+  await userSets({ on: false });
+
+  // Only inside a meeting
+  location.pathname = "/";
+  poll();
+  camera(true); await tick();
+  assert.strictEqual(stored.on, false, "camera on the Meet home page: light stays off");
+  location.pathname = "/abc-defg-hij";
+  poll(); await tick();
+  assert.strictEqual(stored.on, true, "joining the meeting with the camera on: light on");
+  camera(false); await tick();
+  await wait(2000);
+  assert.strictEqual(stored.on, false, "off again with the camera");
+
+  // Enabling the option with the camera already on turns the light on; disabling it leaves the light alone
+  await userSets({ auto: false });
+  camera(true); await tick();
+  assert.strictEqual(stored.on, false, "option off: camera ignored");
+  await userSets({ auto: true });
+  assert.strictEqual(stored.on, true, "enabling the option with the camera on: light on");
+  await userSets({ auto: false });
+  assert.strictEqual(stored.on, true, "disabling the option leaves the light on");
+  camera(false); await tick();
+  await wait(5000);
+  assert.strictEqual(stored.on, true, "and the camera no longer turns it off");
+  await userSets({ on: false, auto: true });
+
+  // Leaving the page while the camera had turned the light on (best effort)
+  camera(true); await tick();
+  assert.strictEqual(stored.on, true, "camera on: light on");
+  pageEvents.pagehide();
+  await tick();
+  assert.strictEqual(stored.on, false, "closing the tab turns off the light the camera turned on");
+  camera(false); await tick();
+  await userSets({ on: true });
+  pageEvents.pagehide();
+  await tick();
+  assert.strictEqual(stored.on, true, "closing the tab leaves a light turned on by hand");
+  await userSets({ on: false });
+
+  // Messages come from the page: only well-formed ones from Meet itself count
+  for (const msg of [
+    { origin: "https://evil.example", data: { ringLight: { camera: true, media: true } } },
+    { origin: "https://meet.google.com", data: { ringLight: { camera: "yes", media: true } } },
+    { origin: "https://meet.google.com", data: { ringLight: { camera: true } } },
+    { origin: "https://meet.google.com", data: { ringLight: null } },
+    { origin: "https://meet.google.com", data: { camera: true, media: true } },
+    { origin: "https://meet.google.com", data: "ringLight" },
+    { origin: "https://meet.google.com", data: null },
+  ]) {
+    pageEvents.message(msg); await tick();
+    assert.strictEqual(stored.on, false, `ignored: ${JSON.stringify(msg)}`);
+  }
+  Date.now = realNow;
+  stored = { ...DEFAULTS, on: false };
+  listener(); await tick();
+
+  // camera.js runs in Meet's own world: it wraps getUserMedia and track clones, and polls the tracks
+  // (stop() fires no "ended" event and turning a track off fires nothing)
+  class FakeTrack {
+    constructor(kind) { Object.assign(this, { kind, readyState: "live", enabled: true, muted: false }); }
+    stop() { this.readyState = "ended"; }
+    clone() { return new FakeTrack(this.kind); }
+  }
+  class FakeMediaDevices {
+    async getUserMedia(c) {
+      const tracks = [c.video && new FakeTrack("video"), c.audio && new FakeTrack("audio")].filter(Boolean);
+      return { getTracks: () => tracks };
+    }
+  }
+  const posted = [];
+  let cameraTick;
+  vm.runInContext(fs.readFileSync(__dirname + "/camera.js", "utf8"), vm.createContext({
+    MediaDevices: FakeMediaDevices,
+    MediaStreamTrack: FakeTrack,
+    setInterval: (fn, ms) => { assert.strictEqual(ms, 1000, "polls every second"); cameraTick = fn; },
+    top: { postMessage: (m, target) => posted.push({ ...m.ringLight, target }) },
+  }));
+  const report = () => { posted.length = 0; cameraTick(); return posted[0]; };
+  assert.strictEqual(report(), undefined, "no messages before the page uses the camera");
+  const devices = new FakeMediaDevices();
+  const stream = await devices.getUserMedia({ video: true, audio: true });
+  const [video, audio] = stream.getTracks();
+  assert.strictEqual(video.kind, "video", "the page still gets its stream");
+  assert.deepStrictEqual(report(), { camera: true, media: true, target: "*" }, "camera on reported");
+  assert.deepStrictEqual(report(), { camera: true, media: true, target: "*" }, "repeated every second while tracks exist");
+  // Meet may turn the camera off by disabling the track...
+  video.enabled = false;
+  assert.deepStrictEqual(report(), { camera: false, media: true, target: "*" }, "disabled camera track: camera off");
+  video.enabled = true;
+  assert.strictEqual(report().camera, true, "enabled again: camera on");
+  video.muted = true;
+  assert.strictEqual(report().camera, false, "muted camera track (no frames): camera off");
+  video.muted = false;
+  // ...or by stopping it
+  const copy = video.clone();
+  video.stop();
+  assert.strictEqual(report().camera, true, "a live clone of the camera track keeps the camera on");
+  copy.stop();
+  assert.deepStrictEqual(report(), { camera: false, media: true, target: "*" }, "stopped camera track: camera off, microphone still live");
+  audio.stop();
+  assert.deepStrictEqual(report(), { camera: false, media: false, target: "*" }, "everything stopped: reported once");
+  assert.strictEqual(report(), undefined, "then silent");
+  new FakeTrack("video").clone(); // e.g. a canvas track the page made itself
+  assert.strictEqual(report(), undefined, "clones of tracks not from getUserMedia are ignored");
+  const again = await devices.getUserMedia({ video: true });
+  assert.strictEqual(report().camera, true, "camera started again");
+  again.getTracks()[0].stop();
+  assert.strictEqual(report().camera, false, "and stopped");
+
   // background.js: shortcut toggles the light; the icon is lit per tab, where Meet applies the light
   let command, storageListener, icon, messageListener;
   const tabIcons = {};
@@ -229,6 +415,9 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     // WCAG 2.5.3: the spoken name of the close button contains its visible text
     assert.ok(m.closeLightWindows.message.toLowerCase().includes(m.close.message.toLowerCase()), `${l}: close label contains visible text`);
   }
+  const enMessages = require("./_locales/en/messages.json");
+  assert.strictEqual(enMessages.auto.message, "Turn on with the camera", "camera switch label");
+  assert.strictEqual(enMessages.autoHint.message, "The light turns off again when the camera stops.", "camera switch hint");
   const used = [
     ...fs.readFileSync(__dirname + "/popup.html", "utf8").matchAll(/data-i18n(?:-label)?="(\w+)"/g),
     ...fs.readFileSync(__dirname + "/manifest.json", "utf8").matchAll(/__MSG_(\w+)__/g),
@@ -250,7 +439,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     setPointerCapture() {},
   });
   const nodes = Object.fromEntries(
-    ["on", "frame", "meetBg", "size", "warmth", "intensity", "preview", "reset", "saveDefaults", "factory", "undo", "status", "frameOptions", "meetOptions", "lightWindow", "openWindows", "openCount", "closeWindows"].map((id) => [id, makeNode()])
+    ["on", "auto", "frame", "meetBg", "size", "warmth", "intensity", "preview", "reset", "saveDefaults", "factory", "undo", "status", "frameOptions", "meetOptions", "lightWindow", "openWindows", "openCount", "closeWindows"].map((id) => [id, makeNode()])
   );
   let popupListener, saved = {}, created = null, removed = null, removedListener;
   const openIds = new Set(), closedIds = [];
@@ -291,6 +480,26 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   nodes.on.checked = true;
   nodes.on.fire("input");
   assert.strictEqual(nodes.meetOptions.hidden, false, "switching on shows Meet options");
+
+  // Turn on with the camera: a labelled switch right below "Light on", outside the Meet options, so it shows while the light is off
+  const popupHtml = fs.readFileSync(__dirname + "/popup.html", "utf8");
+  assert.match(popupHtml, /<label class="switch-row"><span data-i18n="auto"><\/span><input type="checkbox" role="switch" id="auto" aria-describedby="autoHint"><\/label>\s*<div class="hint" id="autoHint" data-i18n="autoHint"><\/div>/,
+    "camera switch has a visible label and its hint as description");
+  assert.ok(popupHtml.indexOf('id="on"') < popupHtml.indexOf('id="auto"') && popupHtml.indexOf('id="auto"') < popupHtml.indexOf('id="meetOptions"'),
+    "camera switch between Light on and the Meet options");
+  assert.strictEqual(nodes.auto.checked, false, "camera switch off by default");
+  nodes.on.checked = false;
+  nodes.on.fire("input");
+  nodes.auto.checked = true;
+  nodes.auto.fire("input");
+  assert.strictEqual(saved.auto, true, "camera switch saved");
+  assert.strictEqual(saved.on, false, "turning it on does not turn the light on from the panel");
+  assert.strictEqual(nodes.auto.hidden, undefined, "camera switch never hidden");
+  nodes.auto.checked = false;
+  nodes.auto.fire("input");
+  assert.strictEqual(saved.auto, false, "camera switch off saved");
+  nodes.on.checked = true;
+  nodes.on.fire("input");
 
   // Material 3 slider: the travelled part of the thickness track is filled; size 15 of 5..35 is a third of the way
   assert.strictEqual(nodes.size.style["--p"], String(1 / 3), "thickness fill follows the value on open");
@@ -357,20 +566,25 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   nodes.reset.fire("click");
   await tick();
   assert.strictEqual(saved.warmth, DEFAULTS.warmth, "reset without saved defaults: factory values");
+  assert.strictEqual(saved.auto, false, "camera switch off in factory values");
   assert.strictEqual(saved.on, true, "reset keeps the light on");
   nodes.warmth.value = "40";
   nodes.intensity.value = "70";
   nodes.warmth.fire("input");
+  nodes.auto.checked = true;
+  nodes.auto.fire("input");
   nodes.saveDefaults.fire("click");
   await tick();
-  assert.deepStrictEqual(saved.userDefaults, { frame: true, meetBg: false, size: 15, warmth: 40, intensity: 70 },
-    "save stores the current settings, without the on/off state");
+  assert.deepStrictEqual(saved.userDefaults, { auto: true, frame: true, meetBg: false, size: 15, warmth: 40, intensity: 70 },
+    "save stores the current settings, camera switch included, without the on/off state");
   stored.userDefaults = saved.userDefaults;
   nodes.warmth.value = "-60";
   nodes.warmth.fire("input");
   nodes.reset.fire("click");
   await tick();
   assert.strictEqual(saved.warmth, 40, "reset restores the saved warmth");
+  assert.strictEqual(saved.auto, true, "reset restores the saved camera switch");
+  assert.strictEqual(nodes.auto.checked, true, "and shows it");
   assert.strictEqual(saved.intensity, 70, "reset restores the saved intensity");
   assert.strictEqual(+nodes.warmth.value, 40, "reset moves the slider back too");
   assert.strictEqual(saved.on, true, "reset still keeps the light on");
@@ -380,6 +594,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   await tick();
   assert.strictEqual(saved.warmth, DEFAULTS.warmth, "factory link applies factory warmth");
   assert.strictEqual(saved.intensity, DEFAULTS.intensity, "factory link applies factory intensity");
+  assert.strictEqual(saved.auto, false, "factory link turns the camera switch off (off by default)");
   assert.strictEqual(saved.on, true, "factory link keeps the light on");
   assert.strictEqual(saved.userDefaults, undefined, "factory link does not touch the saved defaults");
 

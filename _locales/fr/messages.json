@@ -11,6 +11,12 @@
   "on": {
     "message": "Lumière allumée"
   },
+  "auto": {
+    "message": "Allumer avec la caméra"
+  },
+  "autoHint": {
+    "message": "La lumière s’éteint à nouveau quand la caméra s’arrête."
+  },
   "size": {
     "message": "Épaisseur"
   },

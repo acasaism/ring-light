@@ -11,6 +11,12 @@
   "on": {
     "message": "Luce accesa"
   },
+  "auto": {
+    "message": "Accendi con la fotocamera"
+  },
+  "autoHint": {
+    "message": "La luce si spegne di nuovo quando la fotocamera si spegne."
+  },
   "size": {
     "message": "Spessore"
   },

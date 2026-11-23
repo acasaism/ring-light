@@ -11,6 +11,12 @@
   "on": {
     "message": "Argia piztuta"
   },
+  "auto": {
+    "message": "Piztu kamerarekin"
+  },
+  "autoHint": {
+    "message": "Argia berriro itzaltzen da kamera itzaltzean."
+  },
   "size": {
     "message": "Lodiera"
   },

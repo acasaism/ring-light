@@ -42,6 +42,7 @@ Features
 • Temperature from cool to warm, and intensity from dim to bright
 • Adjustable frame thickness, or no frame at all
 • Light up Meet's dark background for even more light
+• Optional: the light turns on by itself when your camera starts, and off again when it stops
 • Light window: a movable window filled with light for a second screen (double-click for full screen)
 • Save your favourite settings and go back to them anytime, with undo
 • Keyboard shortcut: Alt+Shift+L
@@ -74,6 +75,7 @@ Funciones
 • Temperatura de fría a cálida, e intensidad de suave a máxima
 • Grosor del marco ajustable, o sin marco
 • Ilumina el fondo oscuro de Meet para tener aún más luz
+• Opcional: la luz se enciende sola al activar la cámara y se apaga al desactivarla
 • Ventana de luz: una ventana llena de luz que puedes mover a otra pantalla (doble clic para pantalla completa)
 • Guarda tus ajustes favoritos y vuelve a ellos cuando quieras, con opción de deshacer
 • Atajo de teclado: Alt+Mayús+L
@@ -106,6 +108,7 @@ Funcions
 • Temperatura de freda a càlida, i intensitat de suau a màxima
 • Gruix del marc ajustable, o sense marc
 • Il·lumina el fons fosc de Meet per tenir encara més llum
+• Opcional: la llum s'encén sola quan actives la càmera i s'apaga quan la desactives
 • Finestra de llum: una finestra plena de llum que pots moure a una altra pantalla (doble clic per a pantalla completa)
 • Desa la teva configuració preferida i torna-hi quan vulguis, amb opció de desfer
 • Drecera de teclat: Alt+Maj+L
@@ -138,6 +141,7 @@ Funcións
 • Temperatura de fría a cálida, e intensidade de suave a máxima
 • Grosor do marco axustable, ou sen marco
 • Ilumina o fondo escuro de Meet para ter aínda máis luz
+• Opcional: a luz acéndese soa ao activar a cámara e apágase ao desactivala
 • Xanela de luz: unha xanela chea de luz que podes mover a outra pantalla (dobre clic para pantalla completa)
 • Garda os teus axustes favoritos e volve a eles cando queiras, con opción de desfacer
 • Atallo de teclado: Alt+Maiús+L
@@ -170,6 +174,7 @@ Ezaugarriak
 • Tenperatura hotzetik berora, eta intentsitatea leunetik gehienezkora
 • Markoaren lodiera doigarria, edo markorik gabe
 • Argiztatu Meet-en atzeko plano iluna argi gehiago izateko
+• Aukerakoa: argia bera pizten da kamera aktibatzean, eta itzali egiten da kamera itzaltzean
 • Argi-leihoa: argiz betetako leiho bat, beste pantaila batera eraman dezakezuna (klik bikoitza pantaila osorako)
 • Gorde zure ezarpen gogokoenak eta itzuli haietara nahi duzunean, desegiteko aukerarekin
 • Teklatuko lasterbidea: Alt+Maius+L
@@ -202,6 +207,7 @@ Fonctionnalités
 • Température de froide à chaude, et intensité de faible à maximale
 • Épaisseur du cadre réglable, ou pas de cadre du tout
 • Éclairez le fond sombre de Meet pour encore plus de lumière
+• En option : la lumière s’allume toute seule quand la caméra démarre et s’éteint quand elle s’arrête
 • Fenêtre lumineuse : une fenêtre remplie de lumière à placer sur un second écran (double-clic pour le plein écran)
 • Enregistrez vos réglages préférés et revenez-y à tout moment, avec annulation
 • Raccourci clavier : Alt+Maj+L
@@ -234,6 +240,7 @@ Funktionen
 • Farbtemperatur von kalt bis warm, Helligkeit von gedämpft bis maximal
 • Einstellbare Rahmenbreite, oder ganz ohne Rahmen
 • Hellt den dunklen Meet-Hintergrund für noch mehr Licht auf
+• Optional: Das Licht geht von selbst an, wenn die Kamera startet, und wieder aus, wenn sie stoppt
 • Lichtfenster: ein mit Licht gefülltes Fenster für einen zweiten Bildschirm (Doppelklick für Vollbild)
 • Speichere deine Lieblingseinstellungen und kehre jederzeit dorthin zurück, mit Rückgängig-Funktion
 • Tastenkürzel: Alt+Umschalt+L
@@ -266,6 +273,7 @@ Funzionalità
 • Temperatura da fredda a calda e intensità da tenue a massima
 • Spessore della cornice regolabile, o nessuna cornice
 • Illumina lo sfondo scuro di Meet per avere ancora più luce
+• Facoltativo: la luce si accende da sola quando si avvia la fotocamera e si spegne quando si ferma
 • Finestra di luce: una finestra piena di luce da spostare su un secondo schermo (doppio clic per lo schermo intero)
 • Salva le tue impostazioni preferite e tornaci quando vuoi, con la possibilità di annullare
 • Scorciatoia da tastiera: Alt+Maiusc+L
@@ -298,6 +306,7 @@ Recursos
 • Temperatura de fria a quente e intensidade de suave a máxima
 • Espessura da moldura ajustável, ou sem moldura
 • Ilumine o fundo escuro do Meet para ter ainda mais luz
+• Opcional: a luz liga sozinha quando a câmera é ligada e desliga quando ela é desligada
 • Janela de luz: uma janela cheia de luz para colocar em outra tela (clique duas vezes para tela cheia)
 • Salve suas configurações favoritas e volte a elas quando quiser, com opção de desfazer
 • Atalho de teclado: Alt+Shift+L
@@ -330,6 +339,7 @@ Funcionalidades
 • Temperatura de fria a quente e intensidade de suave a máxima
 • Espessura da moldura ajustável, ou sem moldura
 • Ilumine o fundo escuro do Meet para ter ainda mais luz
+• Opcional: a luz liga-se sozinha quando a câmara é ligada e desliga-se quando é desligada
 • Janela de luz: uma janela cheia de luz para colocar noutro ecrã (duplo clique para ecrã inteiro)
 • Guarde as suas definições favoritas e volte a elas quando quiser, com opção de anular
 • Atalho de teclado: Alt+Shift+L
@@ -362,6 +372,7 @@ Google Meet の通話中、画面をリングライトに変えます。やわ�
 • 色温度（寒色〜暖色）と明るさ（暗め〜最大）を調整
 • フレームの太さを調整、またはフレームなし
 • Meet の暗い背景を明るくして、さらに光を増やす
+• オプション：カメラが起動するとライトが自動でオンになり、停止するとオフに戻ります
 • ライトウィンドウ：別の画面に置ける光のウィンドウ（ダブルクリックで全画面表示）
 • お気に入りの設定を保存して、いつでも戻せる（元に戻す機能付き）
 • キーボードショートカット：Alt+Shift+L
@@ -394,6 +405,7 @@ Google Meet の通話中、画面をリングライトに変えます。やわ�
 • 色溫從冷色到暖色、亮度從柔和到最亮皆可調整
 • 可調整邊框粗細，或不使用邊框
 • 照亮 Meet 的深色背景，讓光線更充足
+• 可選：攝影機開啟時燈光自動亮起，停止時再自動關閉
 • 補光視窗：可移到第二個螢幕的光源視窗（按兩下即可全螢幕）
 • 儲存你喜愛的設定，隨時都能回復，並可復原
 • 鍵盤快速鍵：Alt+Shift+L

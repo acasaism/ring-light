@@ -8,7 +8,7 @@ A browser extension that turns your screen into a ring light during Google Meet 
 
 1. Install the extension (see [Install](#install)).
 2. Join a Google Meet call.
-3. Click the toolbar icon and turn on **Light on**, or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>.
+3. Click the toolbar icon and turn on **Light on**, or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>. To skip this step in future calls, turn on **Turn on with the camera**.
 
 The call shrinks slightly and a frame of light fills the edges of the screen. No Meet control is covered.
 
@@ -17,6 +17,7 @@ The call shrinks slightly and a frame of light fills the edges of the screen. No
 | Setting | What it does |
 |---------|--------------|
 | **Light on** | Main switch. The light only applies inside a meeting, not on the Meet home page. |
+| **Turn on with the camera** | Optional, off by default. The light turns on by itself when your camera starts in a meeting, and off again when the camera stops. If you turn the light off during the call, it stays off until the camera starts again; if you turned it on yourself, the camera never turns it off. |
 | **Temperature** | From cool (bluish) to warm (amber) light. |
 | **Intensity** | From dim to full brightness. |
 | **Frame** and **Thickness** | The ring of light around the call, and how wide it is. |
@@ -66,6 +67,7 @@ Temporary add-ons are removed when Firefox restarts.
 
 - On Meet's "You left the meeting" screen the light stays on, because Meet keeps the same address.
 - **Light up Meet's background** finds Meet's dark areas by colour and size, so it may stop working if Google redesigns Meet. It can also light the tiles of participants with their camera off.
+- **Turn on with the camera** needs the Meet tab to be loaded after the extension: reload Meet tabs that were open when you installed or updated it.
 - The settings panel closes when the light window opens. Browsers close extension panels when they lose focus; open the panel again to keep adjusting.
 
 ## Roadmap

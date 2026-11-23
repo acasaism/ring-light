@@ -11,6 +11,12 @@
   "on": {
     "message": "Light on"
   },
+  "auto": {
+    "message": "Turn on with the camera"
+  },
+  "autoHint": {
+    "message": "The light turns off again when the camera stops."
+  },
   "size": {
     "message": "Thickness"
   },

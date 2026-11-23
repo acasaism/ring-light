@@ -28,7 +28,8 @@ To test without other people, open `https://meet.google.com/new` to start a meet
 |------|------|
 | `manifest.json` | One manifest for both browsers: `background.scripts` for Firefox, `background.service_worker` for Chromium |
 | `light.js` | Shared helpers and defaults, loaded first everywhere. Aliases `chrome` to `browser` on Chromium |
-| `content.js` | Runs on Meet: draws the frame and lights Meet's background |
+| `content.js` | Runs on Meet: draws the frame, lights Meet's background and turns the light on and off with the camera |
+| `camera.js` | Runs on Meet in the page's own world (`world: "MAIN"`, at `document_start`): watches the tracks from `getUserMedia` and tells `content.js` whether the camera is on. No extension API there |
 | `background.js` | Keyboard shortcut and per-tab toolbar icon |
 | `popup.html`, `popup.js` | The settings panel |
 | `light.html`, `light-window.js` | The movable light window |

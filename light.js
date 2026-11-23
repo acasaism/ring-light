@@ -2,7 +2,7 @@
 // Chromium exposes the extension API only as `chrome` (promise-based in MV3); Firefox has `browser`.
 if (typeof browser === "undefined" && typeof chrome !== "undefined") globalThis.browser = chrome;
 
-const DEFAULTS = { on: false, frame: true, size: 15, warmth: 0, intensity: 100, meetBg: false };
+const DEFAULTS = { on: false, auto: false, frame: true, size: 15, warmth: 0, intensity: 100, meetBg: false };
 
 // warmth: -100 (cool) .. 0 (white) .. 100 (warm); intensity: 30..100 (%).
 function lightColor(warmth, intensity) {

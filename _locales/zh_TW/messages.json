@@ -11,6 +11,12 @@
   "on": {
     "message": "開啟燈光"
   },
+  "auto": {
+    "message": "隨攝影機自動開啟"
+  },
+  "autoHint": {
+    "message": "攝影機停止時，燈光會再次關閉。"
+  },
   "size": {
     "message": "粗細"
   },

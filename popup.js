@@ -3,7 +3,7 @@ for (const n of document.querySelectorAll("[data-i18n]")) n.textContent = browse
 // Spoken name when the visible text alone is ambiguous (it still contains the visible text, WCAG 2.5.3).
 for (const n of document.querySelectorAll("[data-i18n-label]")) n.setAttribute("aria-label", browser.i18n.getMessage(n.dataset.i18nLabel));
 
-const switches = ["on", "frame", "meetBg"];
+const switches = ["on", "auto", "frame", "meetBg"];
 const sliders = ["size", "warmth", "intensity"];
 const fields = [...switches, ...sliders];
 const el = Object.fromEntries(fields.map((f) => [f, document.getElementById(f)]));
@@ -40,7 +40,7 @@ function render(s) {
 
 browser.storage.local.get(DEFAULTS).then(render);
 
-// Only "on" can change from outside (keyboard shortcut); re-rendering sliders here would make them jump mid-drag.
+// Only "on" can change from outside (keyboard shortcut, camera); re-rendering sliders here would make them jump mid-drag.
 browser.storage.onChanged.addListener((changes) => {
   if (changes.lightWindows) refreshLightWindows();
   if (!changes.on) return;
