@@ -416,6 +416,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     assert.ok(m.closeLightWindows.message.toLowerCase().includes(m.close.message.toLowerCase()), `${l}: close label contains visible text`);
   }
   const enMessages = require("./_locales/en/messages.json");
+  assert.strictEqual(enMessages.sectionMeet.message, "In the call", "section named after the call, not Meet");
   assert.strictEqual(enMessages.auto.message, "Turn on with the camera", "camera switch label");
   assert.strictEqual(enMessages.autoHint.message, "The light turns off again when the camera stops.", "camera switch hint");
   const used = [
