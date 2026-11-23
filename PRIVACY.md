@@ -23,6 +23,6 @@ Removing the extension deletes all of it.
 
 ## Contact
 
-Questions about privacy: open an issue at <https://github.com/acasaism/meet-ring-light/issues>.
+Questions about privacy: open an issue at <https://github.com/acasaism/ring-light/issues>.
 
 Last updated: 23 November 2026.
