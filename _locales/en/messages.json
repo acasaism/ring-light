@@ -1,0 +1,65 @@
+{
+  "extName": {
+    "message": "Meet Ring Light"
+  },
+  "extDescription": {
+    "message": "Turns your screen into a ring light during Google Meet calls by framing the call with adjustable light."
+  },
+  "toggleCommand": {
+    "message": "Turn the ring light on or off"
+  },
+  "on": {
+    "message": "Ring light on"
+  },
+  "size": {
+    "message": "Frame size"
+  },
+  "thick": {
+    "message": "Thick"
+  },
+  "temperature": {
+    "message": "Temperature"
+  },
+  "cool": {
+    "message": "Cool"
+  },
+  "warm": {
+    "message": "Warm"
+  },
+  "intensity": {
+    "message": "Intensity"
+  },
+  "dim": {
+    "message": "Dim"
+  },
+  "max": {
+    "message": "Max"
+  },
+  "reset": {
+    "message": "Reset to defaults"
+  },
+  "shortcutHint": {
+    "message": "Shortcut: Alt+Shift+L"
+  },
+  "meetBg": {
+    "message": "Light up Meet's background"
+  },
+  "meetBgHint": {
+    "message": "Turns Meet's dark areas into light. Some Meet text, like the time, may become hard to read."
+  },
+  "frame": {
+    "message": "Frame"
+  },
+  "thin": {
+    "message": "Thin"
+  },
+  "openLightWindow": {
+    "message": "Open light window"
+  },
+  "lightWindowTitle": {
+    "message": "Ring light"
+  },
+  "lightWindowHint": {
+    "message": "Move this window to another screen. Double-click for full screen."
+  }
+}

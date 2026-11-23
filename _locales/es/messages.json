@@ -1,0 +1,65 @@
+{
+  "extName": {
+    "message": "Meet Ring Light"
+  },
+  "extDescription": {
+    "message": "Convierte tu pantalla en un aro de luz durante las llamadas de Google Meet, enmarcando la llamada con luz ajustable."
+  },
+  "toggleCommand": {
+    "message": "Encender o apagar el aro de luz"
+  },
+  "on": {
+    "message": "Aro de luz encendido"
+  },
+  "size": {
+    "message": "Tamaño del marco"
+  },
+  "thick": {
+    "message": "Grueso"
+  },
+  "temperature": {
+    "message": "Temperatura"
+  },
+  "cool": {
+    "message": "Fría"
+  },
+  "warm": {
+    "message": "Cálida"
+  },
+  "intensity": {
+    "message": "Intensidad"
+  },
+  "dim": {
+    "message": "Suave"
+  },
+  "max": {
+    "message": "Máxima"
+  },
+  "reset": {
+    "message": "Restablecer valores"
+  },
+  "shortcutHint": {
+    "message": "Atajo: Alt+Mayús+L"
+  },
+  "meetBg": {
+    "message": "Iluminar el fondo de Meet"
+  },
+  "meetBgHint": {
+    "message": "Convierte las zonas oscuras de Meet en luz. Algún texto de Meet, como la hora, puede leerse peor."
+  },
+  "frame": {
+    "message": "Marco"
+  },
+  "thin": {
+    "message": "Fino"
+  },
+  "openLightWindow": {
+    "message": "Abrir ventana de luz"
+  },
+  "lightWindowTitle": {
+    "message": "Aro de luz"
+  },
+  "lightWindowHint": {
+    "message": "Mueve esta ventana a otra pantalla. Doble clic para pantalla completa."
+  }
+}

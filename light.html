@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Meet Ring Light</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #fff; }
+    #hint {
+      position: fixed; inset: auto 0 24px; text-align: center;
+      font: 14px system-ui, sans-serif; color: #555; transition: opacity 1s;
+    }
+    #hint.hidden { opacity: 0; }
+  </style>
+</head>
+<body>
+  <div id="hint"></div>
+  <script src="light.js"></script>
+  <script src="light-window.js"></script>
+</body>
+</html>
