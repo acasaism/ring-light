@@ -115,8 +115,9 @@ function apply(s) {
 }
 
 // Back to the user's saved defaults (factory values if none), keeping the light on/off as it is.
+// Defaults saved before the camera switch existed have no "auto": that switch stays as it is.
 document.getElementById("reset").addEventListener("click", undoable("statusReset", (userDefaults) =>
-  apply({ ...DEFAULTS, ...userDefaults, on: el.on.checked })));
+  apply({ ...DEFAULTS, ...(userDefaults && { auto: el.auto.checked }), ...userDefaults, on: el.on.checked })));
 
 factory.addEventListener("click", undoable("statusFactory", () => apply({ ...DEFAULTS, on: el.on.checked })));
 

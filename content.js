@@ -59,40 +59,39 @@ function render() {
   else clearMeetBackground();
 }
 
-// "Turn on with the camera": camera.js reports the camera, and this tab writes the global "on" switch.
+// "Turn on with the camera": camera.js reports the camera; this tab tells background.js when the camera starts or
+// stops, and background.js switches the global "on" for all Meet tabs.
 let camera = false; // camera.js last reported a live camera track
 let cameraOffAt = 0;
-let cameraWanted = false; // camera on, option enabled and inside a meeting
-let autoLit = false; // the camera turned the light on, so it may turn it off again
+let cameraWanted = false; // camera on (or off for under 2 s), option enabled and inside a meeting
 
 function followCamera() {
-  if (!settings.auto) autoLit = false; // disabling the option leaves the light as it is
-  const wanted = camera && settings.auto && isMeetingPath(location.pathname);
-  // Only when the camera starts (or the option is enabled with it on): a light turned off by hand stays off meanwhile.
-  if (wanted && !cameraWanted && !settings.on) {
-    autoLit = true;
-    browser.storage.local.set({ on: true });
-  }
+  // 2 s grace: Meet restarting the track is neither a stop nor a new start (which would relight a light turned off by hand).
+  const wanted = settings.auto && isMeetingPath(location.pathname) && (camera || (cameraWanted && Date.now() - cameraOffAt < 2000));
+  if (wanted === cameraWanted) return;
   cameraWanted = wanted;
-  // 2 s without camera, so a track restart does not flicker the light; never a light turned on by hand.
-  if (autoLit && !camera && Date.now() - cameraOffAt >= 2000) {
-    autoLit = false;
-    browser.storage.local.set({ on: false });
-  }
+  browser.runtime.sendMessage({ camera: wanted }).catch(() => {}); // e.g. extension updated: this script is orphaned
 }
 
 // Messages come from the page's world, so anything on the page can send them: check the shape, trust only booleans.
 addEventListener("message", (e) => {
   const r = e.data && e.data.ringLight;
-  if (e.origin !== location.origin || !r || typeof r.camera !== "boolean" || typeof r.media !== "boolean") return;
+  if (e.origin !== location.origin || !r || typeof r.camera !== "boolean") return;
   if (camera && !r.camera) cameraOffAt = Date.now();
   camera = r.camera;
   followCamera();
 });
 
-// Best effort: the tab may close before the camera is seen stopping.
+// background.js asks every Meet tab before the camera turns the light off.
+browser.runtime.onMessage.addListener((msg, sender, respond) => {
+  if (msg.cameraQuery) respond(cameraWanted);
+});
+
+// Best effort: the tab may close before the camera is seen stopping (background.js also checks when a tab closes).
 addEventListener("pagehide", () => {
-  if (autoLit) browser.storage.local.set({ on: false });
+  camera = false;
+  cameraOffAt = 0; // gone for good: no 2 s grace
+  followCamera();
 });
 
 function load() {
@@ -104,10 +103,7 @@ function load() {
 }
 
 load();
-browser.storage.onChanged.addListener((changes) => {
-  if (changes?.on?.newValue === false) autoLit = false; // turned off by the panel, the shortcut or the camera
-  load();
-});
+browser.storage.onChanged.addListener(load);
 // shortcut: polls the URL because Meet navigates without reloading; switch to the Navigation API once Firefox ships it everywhere.
 setInterval(() => {
   if (location.pathname !== path) {

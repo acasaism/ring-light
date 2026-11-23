@@ -39,6 +39,7 @@
       "js": [
         "camera.js"
       ],
+      "all_frames": true,
       "world": "MAIN",
       "run_at": "document_start"
     }
