@@ -30,6 +30,51 @@ assert.strictEqual(lightColor(100, 100), "rgb(255, 214, 170)", "full warm");
 assert.strictEqual(lightColor(-100, 100), "rgb(205, 225, 255)", "full cool");
 assert.strictEqual(lightColor(0, 50), "rgb(128, 128, 128)", "intensity dims");
 
+// Chromium: no `browser` global, only `chrome`. light.js (loaded first everywhere) aliases it.
+const vm = require("node:vm");
+const chromeApi = { storage: {} };
+const chromeCtx = vm.createContext({ chrome: chromeApi });
+vm.runInContext(fs.readFileSync(__dirname + "/light.js", "utf8"), chromeCtx);
+assert.strictEqual(vm.runInContext("browser", chromeCtx), chromeApi, "browser aliased to chrome on Chromium");
+const firefoxApi = {};
+const firefoxCtx = vm.createContext({ browser: firefoxApi, chrome: {} });
+vm.runInContext(fs.readFileSync(__dirname + "/light.js", "utf8"), firefoxCtx);
+assert.strictEqual(vm.runInContext("browser", firefoxCtx), firefoxApi, "Firefox keeps its own browser");
+
+// Chromium runs background.js as a service worker, which must import light.js itself.
+let imported = [];
+const swCtx = vm.createContext({
+  chrome: {
+    commands: { onCommand: { addListener() {} } },
+    action: { setIcon() {} },
+    storage: { local: { get: async (d) => d }, onChanged: { addListener() {} } },
+  },
+  importScripts: (...files) => {
+    imported.push(...files);
+    for (const f of files) vm.runInContext(fs.readFileSync(__dirname + "/" + f, "utf8"), swCtx);
+  },
+});
+vm.runInContext(fs.readFileSync(__dirname + "/background.js", "utf8"), swCtx);
+assert.deepStrictEqual(imported, ["light.js"], "service worker imports light.js");
+
+// manifest: one file for both browsers
+const manifest = require("./manifest.json");
+assert.deepStrictEqual(manifest.background.scripts, ["light.js", "background.js"], "Firefox background scripts");
+assert.strictEqual(manifest.background.service_worker, "background.js", "Chromium service worker");
+for (const p of [...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon)])
+  assert.ok(p.endsWith(".png") && fs.existsSync(__dirname + "/" + p), `PNG icon exists: ${p}`);
+
+assert.ok(isMeetingPath("/abc-defg-hij"), "meeting code");
+assert.ok(isMeetingPath("/abc-defg-hij/"), "meeting code with trailing slash");
+assert.ok(!isMeetingPath("/"), "landing page");
+assert.ok(!isMeetingPath("/landing"), "other Meet page");
+assert.ok(!isMeetingPath("/abc-defg-hijk"), "not a meeting code");
+
+assert.strictEqual(lightColor(0, 100), "rgb(255, 255, 255)", "neutral max is pure white");
+assert.strictEqual(lightColor(100, 100), "rgb(255, 214, 170)", "full warm");
+assert.strictEqual(lightColor(-100, 100), "rgb(205, 225, 255)", "full cool");
+assert.strictEqual(lightColor(0, 50), "rgb(128, 128, 128)", "intensity dims");
+
 // content.js against a fake page and fake browser.storage
 const html = { style: {} }, body = { style: {} };
 let stored = { ...DEFAULTS }, listener;
@@ -140,15 +185,15 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   };
   eval(fs.readFileSync(__dirname + "/background.js", "utf8"));
   await tick();
-  assert.strictEqual(icon, "icon-off.svg", "off icon at startup");
+  assert.strictEqual(icon[32], "icons/off-32.png", "off icon at startup (PNG: Chrome has no SVG icons)");
   command("toggle-light"); await tick(); await tick();
   assert.strictEqual(stored.on, true, "shortcut turns light on");
-  assert.strictEqual(icon, "icon.svg", "on icon");
+  assert.strictEqual(icon[32], "icons/on-32.png", "on icon");
   command("other"); await tick();
   assert.strictEqual(stored.on, true, "unknown command ignored");
   command("toggle-light"); await tick(); await tick();
   assert.strictEqual(stored.on, false, "shortcut turns light off");
-  assert.strictEqual(icon, "icon-off.svg", "off icon again");
+  assert.strictEqual(icon[32], "icons/off-32.png", "off icon again");
 
   // i18n: every locale has the same keys, and all keys used are defined
   const en = Object.keys(require("./_locales/en/messages.json")).sort();

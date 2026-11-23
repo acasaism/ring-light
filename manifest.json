@@ -4,32 +4,62 @@
   "version": "0.1.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
-  "icons": { "48": "icon.svg", "96": "icon.svg" },
-  "permissions": ["storage"],
-  "host_permissions": ["https://meet.google.com/*"],
-  "background": { "scripts": ["light.js", "background.js"] },
+  "icons": {
+    "48": "icons/on-48.png",
+    "96": "icons/on-96.png",
+    "128": "icons/on-128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*"
+  ],
+  "background": {
+    "scripts": [
+      "light.js",
+      "background.js"
+    ],
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["https://meet.google.com/*"],
-      "js": ["light.js", "content.js"]
+      "matches": [
+        "https://meet.google.com/*"
+      ],
+      "js": [
+        "light.js",
+        "content.js"
+      ]
     }
   ],
   "commands": {
     "toggle-light": {
-      "suggested_key": { "default": "Alt+Shift+L" },
+      "suggested_key": {
+        "default": "Alt+Shift+L"
+      },
       "description": "__MSG_toggleCommand__"
     }
   },
   "action": {
     "default_title": "__MSG_extName__",
-    "default_icon": "icon-off.svg",
+    "default_icon": {
+      "16": "icons/off-16.png",
+      "32": "icons/off-32.png",
+      "48": "icons/off-48.png"
+    },
     "default_popup": "popup.html"
   },
   "browser_specific_settings": {
     "gecko": {
       "id": "meet-ring-light@local",
       "strict_min_version": "128.0",
-      "data_collection_permissions": { "required": ["none"] }
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
-  }
+  },
+  "minimum_chrome_version": "121"
 }
