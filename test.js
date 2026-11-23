@@ -50,6 +50,9 @@ assert.deepStrictEqual(imported, ["light.js"], "service worker imports light.js"
 const manifest = require("./manifest.json");
 assert.deepStrictEqual(manifest.background.scripts, ["light.js", "background.js"], "Firefox background scripts");
 assert.strictEqual(manifest.background.service_worker, "background.js", "Chromium service worker");
+// The Firefox ID can never change once published; the name is descriptive, not Google's brand
+assert.strictEqual(manifest.browser_specific_settings.gecko.id, "ring-light@acasaism.github.io", "permanent Firefox ID");
+assert.strictEqual(require("./_locales/en/messages.json").extName.message, "Ring Light for Google Meet", "store name");
 for (const p of [...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon)])
   assert.ok(p.endsWith(".png") && fs.existsSync(__dirname + "/" + p), `PNG icon exists: ${p}`);
 
