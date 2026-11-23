@@ -218,7 +218,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.deepStrictEqual(es, en, "es and en define the same messages");
   // Chrome only accepts regional Portuguese and Chinese codes (pt_BR, pt_PT, zh_TW), not plain pt or zh
   const locales = fs.readdirSync(__dirname + "/_locales").sort();
-  // gl and eu work in Firefox only: Chrome ignores locales outside its list
+  // gl works in Firefox only: Chrome ignores it (the Chrome Web Store does accept eu)
   assert.deepStrictEqual(locales, ["ca", "de", "en", "es", "eu", "fr", "gl", "it", "ja", "pt_BR", "pt_PT", "zh_TW"], "supported languages");
   for (const l of locales) {
     const m = require(`./_locales/${l}/messages.json`);

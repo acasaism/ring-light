@@ -26,7 +26,7 @@ The call shrinks slightly and a frame of light fills the edges of the screen. No
 
 <p align="center"><img src="docs/popup.png" alt="The settings panel in light and dark mode: Light on switch, Color section with temperature and intensity sliders, In Meet section with Frame, Thickness and Meet background options, and an Open light window button." width="572"></p>
 
-The toolbar icon lights up only in the tab where the light is applied. The panel follows your browser's light or dark theme and language: English, Spanish, Catalan, Galician, Basque, French, German, Italian, Portuguese (Brazil and Portugal), Japanese and Traditional Chinese. Galician and Basque work in Firefox only, because Chrome does not support them for extensions. [Help improve the translations](CONTRIBUTING.md#translations).
+The toolbar icon lights up only in the tab where the light is applied. The panel follows your browser's light or dark theme and language: English, Spanish, Catalan, Galician, Basque, French, German, Italian, Portuguese (Brazil and Portugal), Japanese and Traditional Chinese. Galician works in Firefox only, because Chrome does not support it for extensions. [Help improve the translations](CONTRIBUTING.md#translations).
 
 ## Screenshots
 

@@ -60,7 +60,7 @@ To add a language:
 2. Add the code to the language list in `test.js` and run `node test.js`.
 3. Open the panel in that language and check that no text overflows.
 
-Use a code from [Chrome's supported locales](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales) when possible. Chrome ignores other codes and shows English instead, while Firefox accepts them; that is why Galician (`gl`) and Basque (`eu`) only work in Firefox. Chrome also has no plain `pt` or `zh`: use `pt_BR`, `pt_PT`, `zh_CN` or `zh_TW`.
+Use a code from [Chrome's supported locales](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales) when possible. Chrome ignores other codes and shows English instead, while Firefox accepts them; that is why Galician (`gl`) only works in Firefox. The Chrome Web Store does accept Basque (`eu`), although that page does not list it. Chrome also has no plain `pt` or `zh`: use `pt_BR`, `pt_PT`, `zh_CN` or `zh_TW`.
 
 ## Releasing
 

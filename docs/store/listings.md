@@ -10,7 +10,7 @@ Only the Spanish text has been reviewed by a native speaker. Corrections are wel
 | Spanish | Español (de España) | Spanish |
 | Catalan | Català | Catalan |
 | Galician | Galego | — (not supported) |
-| Basque | Euskara | — (not supported) |
+| Basque | Euskara | Basque |
 | French | Français | French |
 | German | Deutsch | German |
 | Italian | Italiano | Italian |
