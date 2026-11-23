@@ -67,6 +67,14 @@ assert.strictEqual(lightColor(100, 100), "rgb(255, 214, 170)", "full warm");
 assert.strictEqual(lightColor(-100, 100), "rgb(205, 225, 255)", "full cool");
 assert.strictEqual(lightColor(0, 50), "rgb(128, 128, 128)", "intensity dims");
 
+// Release workflow: a GitHub release is only submitted to the stores when its tag matches the manifest version
+const { spawnSync } = require("node:child_process");
+const checkTag = (tag) => spawnSync("sh", [__dirname + "/scripts/check-tag.sh", tag]);
+assert.strictEqual(checkTag("v" + manifest.version).status, 0, "tag matching the manifest version passes");
+const badTag = checkTag("v0.0.0");
+assert.notStrictEqual(badTag.status, 0, "tag not matching the manifest version fails");
+assert.match(badTag.stderr.toString(), /does not match/, "mismatch explained");
+
 // content.js against a fake page and fake browser.storage
 const html = { style: {} }, body = { style: {} };
 let stored = { ...DEFAULTS }, listener;

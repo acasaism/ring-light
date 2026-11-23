@@ -1,0 +1,57 @@
+# Publishing a GitHub release (tag vX.Y.Z) submits that version to the stores.
+# The release itself, with its notes, is created by hand; see CONTRIBUTING.md#releasing.
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write # attach the zip to the release
+
+jobs:
+  firefox:
+    name: Submit to addons.mozilla.org
+    # Pre-releases would otherwise reach the public listing.
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name }} # used as "$TAG", never pasted into scripts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run tests
+        run: node test.js
+
+      - name: Check the tag matches the manifest version
+        run: scripts/check-tag.sh "$TAG"
+
+      - name: Build the store zip
+        run: scripts/build.sh
+
+      - name: Attach the zip to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" dist/ring-light-*.zip --clobber
+
+      - name: Submit the new version to addons.mozilla.org
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+        run: |
+          if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then
+            echo "::error::Missing AMO_API_KEY or AMO_API_SECRET repository secret (see CONTRIBUTING.md#releasing)"
+            exit 1
+          fi
+          # Submit exactly the files in the store zip. With the add-on ID in manifest.json this adds a
+          # version to the existing listing; --approval-timeout 0 returns without waiting for review.
+          mkdir -p "$RUNNER_TEMP/ext"
+          unzip -q dist/ring-light-*.zip -d "$RUNNER_TEMP/ext"
+          npx --yes web-ext@8.10.0 sign --channel=listed --approval-timeout=0 \
+            --source-dir="$RUNNER_TEMP/ext" --artifacts-dir="$RUNNER_TEMP/web-ext-artifacts"

@@ -62,6 +62,24 @@ To add a language:
 
 Use a code from [Chrome's supported locales](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales) when possible. Chrome ignores other codes and shows English instead, while Firefox accepts them; that is why Galician (`gl`) and Basque (`eu`) only work in Firefox. Chrome also has no plain `pt` or `zh`: use `pt_BR`, `pt_PT`, `zh_CN` or `zh_TW`.
 
+## Releasing
+
+For maintainers. Publishing a GitHub release submits that version to the stores.
+
+1. Bump `version` in `manifest.json` ([semver](https://semver.org/): fixes `1.1.1`, features `1.2.0`) and commit it as `chore(release): X.Y.Z`.
+2. Tag and push: `git tag -a vX.Y.Z -m "Ring Light for Google Meet X.Y.Z" && git push origin master vX.Y.Z`.
+3. Create the GitHub release for that tag with the release notes: `gh release create vX.Y.Z --title vX.Y.Z --notes-file notes.md`.
+
+The [Release workflow](.github/workflows/release.yml) then runs the tests, checks that the tag matches the manifest version, builds the zip, attaches it to the release and submits it to addons.mozilla.org as a new version, which goes through Mozilla's review. Add the version notes on addons.mozilla.org by hand if you want them shown there.
+
+Before the first release, add two repository secrets with an [addons.mozilla.org API key](https://addons.mozilla.org/developers/addon/api/key/): `AMO_API_KEY` (JWT issuer) and `AMO_API_SECRET` (JWT secret).
+
+Good to know:
+
+- Releases marked as **pre-release** are not submitted.
+- GitHub runs the workflow file from the tagged commit, so it only applies to versions released after it was added.
+- If the submission fails, fix the cause and re-run the job from the Actions tab. If addons.mozilla.org already accepted that version, bump the version and release again: a version number can only be submitted once.
+
 ## Reporting bugs
 
 Open an issue with your browser and its version, your operating system, what you expected and what happened. A screenshot helps.
