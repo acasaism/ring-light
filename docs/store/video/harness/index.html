@@ -1,0 +1,61 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #131314; font-family: "Noto Sans", system-ui, sans-serif; }
+  #toolbar { position: absolute; left: 0; top: 0; right: 0; height: 36px; background: #dee3eb; display: flex; align-items: center; gap: 10px; padding: 0 10px; box-sizing: border-box; }
+  #toolbar .url { flex: 1; height: 26px; border-radius: 13px; background: #fff; color: #3c4043; font-size: 13px; line-height: 26px; padding: 0 14px; }
+  #toolbar img { width: 18px; height: 18px; padding: 5px; border-radius: 50%; }
+  #call { position: absolute; left: 0; top: 36px; width: 1280px; height: 684px; border: 0; }
+  #note { position: absolute; right: 10px; bottom: 8px; padding: 2px 8px; border-radius: 9px; background: rgb(32 33 36 / 0.6); color: #e8eaed; font-size: 11px; z-index: 8; }
+  #panel { position: absolute; right: 12px; top: 40px; width: 272px; height: 690px; border: 0; border-radius: 8px;
+           box-shadow: 0 8px 28px rgb(0 0 0 / 0.35); background: #fff; opacity: 0; transform-origin: top right; }
+  #caption { position: absolute; left: 50%; top: 44px; transform: translateX(-50%); padding: 7px 20px; border-radius: 21px;
+             background: rgb(32 33 36 / 0.88); color: #fff; font-size: 23px; font-weight: 600; white-space: nowrap;
+             opacity: 0; }
+  #cursor { position: absolute; left: 0; top: 0; width: 26px; height: 26px; pointer-events: none; z-index: 10; }
+  #ripple { position: absolute; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%;
+            background: rgb(11 87 208 / 0.35); opacity: 0; pointer-events: none; z-index: 9; }
+</style></head><body>
+<script>
+  window.fakeStore = { data: { on: false, frame: true, size: 15, warmth: 0, intensity: 100, meetBg: false }, listeners: [] };
+  window.lightWindowOpened = false;
+  window.openLightWindow = () => { window.lightWindowOpened = true; };
+</script>
+<div id="toolbar"><div class="url">meet.google.com/abc-defg-hij</div><img id="icon" src="/icons/off-32.png" alt=""></div>
+<iframe id="call" src="call.html"></iframe>
+<div id="note">Simulated call · results depend on your screen and room</div>
+<iframe id="panel" src="/popup.html"></iframe>
+<div id="caption"></div>
+<div id="ripple"></div>
+<svg id="cursor" viewBox="0 0 26 26"><path d="M3 2 L3 21 L8 16.5 L11.5 24 L14.8 22.6 L11.3 15.3 L18 15.3 Z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg>
+<script>
+  // Helpers the recorder calls each frame. Animations are driven by video time (p = 0..1), never by CSS
+  // transitions, because recording runs slower than real time.
+  const ZOOM = 1.0;
+  window.ui = {
+    caption(text, alpha) { const c = document.getElementById("caption"); c.textContent = text || ""; c.style.opacity = text ? alpha : 0; },
+    cursor(x, y) { document.getElementById("cursor").style.transform = `translate(${x - 3}px, ${y - 2}px)`; },
+    ripple(x, y, p) { const r = document.getElementById("ripple"); r.style.left = x + "px"; r.style.top = y + "px";
+      r.style.opacity = p > 0 && p < 1 ? 1 - p : 0; r.style.transform = `scale(${0.3 + 1.3 * p})`; },
+    // Real size, as on a 720p screen; height follows the content like the real popup.
+    panel(p) { const f = document.getElementById("panel"); f.style.opacity = p;
+      f.style.height = f.contentDocument.body.getBoundingClientRect().height + "px";
+      f.style.transform = `translateY(${(1 - p) * -8}px) scale(${ZOOM * (0.98 + 0.02 * p)})`; },
+    // Centre of a panel control in page coordinates; for sliders, the thumb position for a value.
+    point(id, value) {
+      const f = document.getElementById("panel"), el = f.contentDocument.getElementById(id), r = el.getBoundingClientRect(), o = f.getBoundingClientRect();
+      const z = ZOOM; // iframe content coordinates are unscaled
+      if (value === undefined) return [o.left + (r.left + r.width / 2) * z, o.top + (r.top + r.height / 2) * z];
+      const ratio = (value - el.min) / (el.max - el.min);
+      return [o.left + (r.left + 8 + (r.width - 16) * ratio) * z, o.top + (r.top + r.height / 2) * z];
+    },
+    lit(force) { const s = window.fakeStore.data, w = document.getElementById("call").contentWindow;
+      document.getElementById("icon").src = s.on ? "/icons/on-32.png" : "/icons/off-32.png"; // per-tab icon lights up with the light
+      const target = !s.on ? 0 : Math.min(1, (s.intensity / 100) * ((s.frame ? 0.3 + s.size / 60 : 0) + (s.meetBg ? 0.7 : 0)));
+      this._lit = force ?? (this._lit || 0) + (target - (this._lit || 0)) * 0.2;
+      if (w.setLit) w.setLit(this._lit, w.lightColor(s.warmth, 100).match(/\d+/g).map(Number)); },
+    // Clean still of the screen for the two-monitor scene: no panel, caption, cursor or note
+    clean() { for (const id of ["panel", "caption", "cursor", "ripple", "note"]) document.getElementById(id).style.visibility = "hidden"; },
+    state() { return { ...window.fakeStore.data, lightWindowOpened: window.lightWindowOpened }; },
+  };
+</script>
+</body></html>
