@@ -35,6 +35,7 @@ const swCtx = vm.createContext({
   chrome: {
     commands: { onCommand: { addListener() {} } },
     action: { setIcon() {} },
+    runtime: { onMessage: { addListener() {} } },
     storage: { local: { get: async (d) => d }, onChanged: { addListener() {} } },
   },
   importScripts: (...files) => {
@@ -97,8 +98,10 @@ global.lightColor = lightColor;
 global.isMeetingPath = isMeetingPath;
 global.location = { pathname: "/abc-defg-hij" };
 let poll;
+const sent = [];
 global.setInterval = (fn) => (poll = fn);
 global.browser = {
+  runtime: { sendMessage: async (m) => sent.push(m) },
   storage: {
     local: { get: async (d) => ({ ...d, ...stored }) },
     onChanged: { addListener: (fn) => (listener = fn) },
@@ -110,6 +113,8 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
 (async () => {
   await tick();
   assert.strictEqual(body.style.transform, "", "off by default");
+  // The toolbar icon is lit only in the tab where the light is actually applied
+  assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "tells the icon the light is not applied");
 
   stored = { on: true, size: 20, warmth: 0, intensity: 100 };
   listener(); await tick();
@@ -117,14 +122,18 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   // fixed 16px corner, compensated for the scale so it shows at 16px on screen
   assert.strictEqual(body.style.clipPath, "inset(0 round 20px)", "rounded corners");
   assert.strictEqual(html.style.background, "rgb(255, 255, 255)");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: true }, "light applied in a meeting: icon on");
 
   // Meet is a single-page app: leaving the call to the landing page has no reload
   location.pathname = "/";
   poll();
   assert.strictEqual(body.style.transform, "", "no light outside a meeting");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "Meet landing page: icon off although the switch is on");
   location.pathname = "/xyz-abcd-efg";
   poll();
   assert.strictEqual(body.style.transform, "scale(0.8)", "light back when joining another meeting");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: true }, "icon on again in the new meeting");
+  const sentBefore = sent.length;
 
   assert.strictEqual(stage.style.backgroundColor, "", "Meet background untouched unless enabled");
 
@@ -137,6 +146,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   stored = { ...stored, warmth: 100 };
   listener(); await tick();
   assert.strictEqual(stage.style.backgroundColor, "rgb(255, 214, 170)", "follows light colour");
+  assert.strictEqual(sent.length, sentBefore, "colour changes do not resend the icon state");
 
   // frame off: Meet full screen, light only from its background
   stored = { ...stored, frame: false };
@@ -157,16 +167,19 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   stored = { ...stored, on: false };
   listener(); await tick();
   assert.strictEqual(body.style.transform + body.style.clipPath + html.style.background, "", "off restores page");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "switch off: icon off");
 
-  // background.js: shortcut toggles the light, icon follows the state
-  let command, storageListener, icon;
+  // background.js: shortcut toggles the light; the icon is lit per tab, where Meet applies the light
+  let command, storageListener, icon, messageListener;
+  const tabIcons = {};
   global.browser = {
     commands: { onCommand: { addListener: (fn) => (command = fn) } },
-    action: { setIcon: ({ path }) => (icon = path) },
+    action: { setIcon: ({ path, tabId }) => (tabId === undefined ? (icon = path) : (tabIcons[tabId] = path)) },
+    runtime: { onMessage: { addListener: (fn) => (messageListener = fn) } },
     storage: {
       local: {
         get: async (d) => ({ ...d, ...stored }),
-        set: async (v) => { stored = { ...stored, ...v }; storageListener(); },
+        set: async (v) => { stored = { ...stored, ...v }; storageListener?.(); },
       },
       onChanged: { addListener: (fn) => (storageListener = fn) },
     },
@@ -176,12 +189,17 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(icon[32], "icons/off-32.png", "off icon at startup (PNG: Chrome has no SVG icons)");
   command("toggle-light"); await tick(); await tick();
   assert.strictEqual(stored.on, true, "shortcut turns light on");
-  assert.strictEqual(icon[32], "icons/on-32.png", "on icon");
+  assert.strictEqual(icon[32], "icons/off-32.png", "switch on alone does not light the icon everywhere");
+  messageListener({ lightActive: true }, { tab: { id: 5 } });
+  assert.strictEqual(tabIcons[5][32], "icons/on-32.png", "icon lit in the meeting tab only");
+  messageListener({ lightActive: false }, { tab: { id: 5 } });
+  assert.strictEqual(tabIcons[5][32], "icons/off-32.png", "icon off again in that tab");
+  messageListener({ lightActive: true }, {}); // not from a tab
+  assert.strictEqual(icon[32], "icons/off-32.png", "messages without a tab are ignored");
   command("other"); await tick();
   assert.strictEqual(stored.on, true, "unknown command ignored");
   command("toggle-light"); await tick(); await tick();
   assert.strictEqual(stored.on, false, "shortcut turns light off");
-  assert.strictEqual(icon[32], "icons/off-32.png", "off icon again");
 
   // i18n: every locale has the same keys, and all keys used are defined
   const en = Object.keys(require("./_locales/en/messages.json")).sort();

@@ -2,6 +2,14 @@
 // so no Meet control is covered. Only inside a meeting, not on the landing page.
 let settings = DEFAULTS;
 let path = location.pathname;
+let iconActive; // last state reported, so colour changes do not resend it
+
+// The toolbar icon is lit only in the tab where the light is applied; background.js sets it per tab.
+function reportActive(active) {
+  if (active === iconActive) return;
+  iconActive = active;
+  browser.runtime.sendMessage({ lightActive: active }).catch(() => {}); // e.g. extension reloading
+}
 
 // Optional: repaint Meet's large dark areas with the light colour.
 // shortcut: finds them by colour and size because Meet's class names are obfuscated; may need updating if Meet redesigns.
@@ -32,8 +40,10 @@ function render() {
   if (!s.on || !isMeetingPath(location.pathname)) {
     html.background = body.transform = body.transformOrigin = body.clipPath = "";
     clearMeetBackground();
+    reportActive(false);
     return;
   }
+  reportActive(true);
   const color = lightColor(s.warmth, s.intensity);
   if (s.frame) {
     const scale = 1 - s.size / 100;
