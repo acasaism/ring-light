@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Anneau lumineux pour Google Meet"
+  },
+  "extDescription": {
+    "message": "Transforme votre écran en anneau lumineux pendant les appels Google Meet en encadrant l’appel d’une lumière réglable."
+  },
+  "toggleCommand": {
+    "message": "Allumer ou éteindre l’anneau lumineux"
+  },
+  "on": {
+    "message": "Lumière allumée"
+  },
+  "size": {
+    "message": "Épaisseur"
+  },
+  "thick": {
+    "message": "Épaisse"
+  },
+  "temperature": {
+    "message": "Température"
+  },
+  "cool": {
+    "message": "Froide"
+  },
+  "warm": {
+    "message": "Chaude"
+  },
+  "intensity": {
+    "message": "Intensité"
+  },
+  "dim": {
+    "message": "Faible"
+  },
+  "max": {
+    "message": "Max"
+  },
+  "reset": {
+    "message": "Réinitialiser"
+  },
+  "shortcutHint": {
+    "message": "Raccourci : Alt+Maj+L"
+  },
+  "meetBg": {
+    "message": "Éclairer le fond de Meet"
+  },
+  "meetBgHint": {
+    "message": "L’heure et d’autres textes de Meet peuvent devenir moins lisibles."
+  },
+  "frame": {
+    "message": "Cadre"
+  },
+  "thin": {
+    "message": "Fine"
+  },
+  "openLightWindow": {
+    "message": "Ouvrir la fenêtre lumineuse"
+  },
+  "lightWindowTitle": {
+    "message": "Anneau lumineux"
+  },
+  "lightWindowHint": {
+    "message": "Déplacez cette fenêtre vers un autre écran. Double-cliquez pour le plein écran."
+  },
+  "sectionColor": {
+    "message": "Couleur"
+  },
+  "sectionMeet": {
+    "message": "Dans Meet"
+  },
+  "saveDefaults": {
+    "message": "Définir par défaut"
+  },
+  "saved": {
+    "message": "Enregistré"
+  },
+  "factory": {
+    "message": "Réglages d’usine"
+  },
+  "undo": {
+    "message": "Annuler"
+  },
+  "neutral": {
+    "message": "Neutre"
+  },
+  "statusSaved": {
+    "message": "Réglages enregistrés par défaut. Vous pouvez annuler."
+  },
+  "statusReset": {
+    "message": "Réglages réinitialisés. Vous pouvez annuler."
+  },
+  "statusFactory": {
+    "message": "Réglages d’usine appliqués. Vous pouvez annuler."
+  },
+  "statusUndone": {
+    "message": "Annulé."
+  },
+  "close": {
+    "message": "Fermer"
+  },
+  "closeLightWindows": {
+    "message": "Fermer les fenêtres lumineuses"
+  },
+  "openWindowsOne": {
+    "message": "1 fenêtre ouverte"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ fenêtres ouvertes",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Fenêtres lumineuses fermées."
+  }
+}

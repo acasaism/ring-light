@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Anell de llum per a Google Meet"
+  },
+  "extDescription": {
+    "message": "Converteix la pantalla en un anell de llum durant les trucades de Google Meet, emmarcant la trucada amb llum ajustable."
+  },
+  "toggleCommand": {
+    "message": "Encén o apaga l'anell de llum"
+  },
+  "on": {
+    "message": "Llum encesa"
+  },
+  "size": {
+    "message": "Gruix"
+  },
+  "thick": {
+    "message": "Gruixut"
+  },
+  "temperature": {
+    "message": "Temperatura"
+  },
+  "cool": {
+    "message": "Freda"
+  },
+  "warm": {
+    "message": "Càlida"
+  },
+  "intensity": {
+    "message": "Intensitat"
+  },
+  "dim": {
+    "message": "Suau"
+  },
+  "max": {
+    "message": "Màxima"
+  },
+  "reset": {
+    "message": "Restableix"
+  },
+  "shortcutHint": {
+    "message": "Drecera: Alt+Maj+L"
+  },
+  "meetBg": {
+    "message": "Il·lumina el fons de Meet"
+  },
+  "meetBgHint": {
+    "message": "Pot dificultar la lectura de l'hora i d'altres textos de Meet."
+  },
+  "frame": {
+    "message": "Marc"
+  },
+  "thin": {
+    "message": "Fi"
+  },
+  "openLightWindow": {
+    "message": "Obre la finestra de llum"
+  },
+  "lightWindowTitle": {
+    "message": "Anell de llum"
+  },
+  "lightWindowHint": {
+    "message": "Mou aquesta finestra a una altra pantalla. Fes doble clic per a pantalla completa."
+  },
+  "sectionColor": {
+    "message": "Color"
+  },
+  "sectionMeet": {
+    "message": "A Meet"
+  },
+  "saveDefaults": {
+    "message": "Desa com a predeterminat"
+  },
+  "saved": {
+    "message": "Desat"
+  },
+  "factory": {
+    "message": "Valors de fàbrica"
+  },
+  "undo": {
+    "message": "Desfés"
+  },
+  "neutral": {
+    "message": "Neutra"
+  },
+  "statusSaved": {
+    "message": "Configuració desada com a predeterminada. Ho pots desfer."
+  },
+  "statusReset": {
+    "message": "Configuració restablerta. Ho pots desfer."
+  },
+  "statusFactory": {
+    "message": "Valors de fàbrica aplicats. Ho pots desfer."
+  },
+  "statusUndone": {
+    "message": "Desfet."
+  },
+  "close": {
+    "message": "Tanca"
+  },
+  "closeLightWindows": {
+    "message": "Tanca les finestres de llum"
+  },
+  "openWindowsOne": {
+    "message": "1 finestra oberta"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ finestres obertes",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Finestres de llum tancades."
+  }
+}

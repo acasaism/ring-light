@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Luce ad anello per Google Meet"
+  },
+  "extDescription": {
+    "message": "Trasforma lo schermo in una luce ad anello durante le chiamate di Google Meet, incorniciando la chiamata con una luce regolabile."
+  },
+  "toggleCommand": {
+    "message": "Accendi o spegni la luce ad anello"
+  },
+  "on": {
+    "message": "Luce accesa"
+  },
+  "size": {
+    "message": "Spessore"
+  },
+  "thick": {
+    "message": "Spesso"
+  },
+  "temperature": {
+    "message": "Temperatura"
+  },
+  "cool": {
+    "message": "Fredda"
+  },
+  "warm": {
+    "message": "Calda"
+  },
+  "intensity": {
+    "message": "Intensità"
+  },
+  "dim": {
+    "message": "Tenue"
+  },
+  "max": {
+    "message": "Massima"
+  },
+  "reset": {
+    "message": "Ripristina"
+  },
+  "shortcutHint": {
+    "message": "Scorciatoia: Alt+Maiusc+L"
+  },
+  "meetBg": {
+    "message": "Illumina lo sfondo di Meet"
+  },
+  "meetBgHint": {
+    "message": "L'ora e altri testi di Meet potrebbero risultare meno leggibili."
+  },
+  "frame": {
+    "message": "Cornice"
+  },
+  "thin": {
+    "message": "Sottile"
+  },
+  "openLightWindow": {
+    "message": "Apri finestra di luce"
+  },
+  "lightWindowTitle": {
+    "message": "Luce ad anello"
+  },
+  "lightWindowHint": {
+    "message": "Sposta questa finestra su un altro schermo. Doppio clic per lo schermo intero."
+  },
+  "sectionColor": {
+    "message": "Colore"
+  },
+  "sectionMeet": {
+    "message": "In Meet"
+  },
+  "saveDefaults": {
+    "message": "Salva come predefinito"
+  },
+  "saved": {
+    "message": "Salvato"
+  },
+  "factory": {
+    "message": "Impostazioni di fabbrica"
+  },
+  "undo": {
+    "message": "Annulla"
+  },
+  "neutral": {
+    "message": "Neutra"
+  },
+  "statusSaved": {
+    "message": "Impostazioni salvate come predefinite. Puoi annullare."
+  },
+  "statusReset": {
+    "message": "Impostazioni ripristinate. Puoi annullare."
+  },
+  "statusFactory": {
+    "message": "Impostazioni di fabbrica applicate. Puoi annullare."
+  },
+  "statusUndone": {
+    "message": "Annullato."
+  },
+  "close": {
+    "message": "Chiudi"
+  },
+  "closeLightWindows": {
+    "message": "Chiudi le finestre di luce"
+  },
+  "openWindowsOne": {
+    "message": "1 finestra aperta"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ finestre aperte",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Finestre di luce chiuse."
+  }
+}

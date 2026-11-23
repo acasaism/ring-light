@@ -24,7 +24,7 @@ The call shrinks slightly and a frame of light fills the edges of the screen. No
 | **Open light window** | Opens a window filled with light that you can move to a second screen. Double-click for full screen. |
 | **Save as default** / **Reset** | Save your favourite settings and go back to them after experimenting. Saving and resetting can be undone. |
 
-The toolbar icon lights up only in the tab where the light is applied. The panel follows your browser's light or dark theme.
+The toolbar icon lights up only in the tab where the light is applied. The panel follows your browser's light or dark theme and language: English, Spanish, Catalan, Galician, Basque, French, German, Italian, Portuguese (Brazil and Portugal), Japanese and Traditional Chinese. Galician and Basque work in Firefox only, because Chrome does not support them for extensions. [Help improve the translations](CONTRIBUTING.md#translations).
 
 ## Install
 

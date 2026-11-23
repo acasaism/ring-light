@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Aro de luz para Google Meet"
+  },
+  "extDescription": {
+    "message": "Converte a túa pantalla nun aro de luz durante as chamadas de Google Meet, enmarcando a chamada cunha luz axustable."
+  },
+  "toggleCommand": {
+    "message": "Acender ou apagar o aro de luz"
+  },
+  "on": {
+    "message": "Luz acesa"
+  },
+  "size": {
+    "message": "Grosor"
+  },
+  "thick": {
+    "message": "Groso"
+  },
+  "temperature": {
+    "message": "Temperatura"
+  },
+  "cool": {
+    "message": "Fría"
+  },
+  "warm": {
+    "message": "Cálida"
+  },
+  "intensity": {
+    "message": "Intensidade"
+  },
+  "dim": {
+    "message": "Suave"
+  },
+  "max": {
+    "message": "Máxima"
+  },
+  "reset": {
+    "message": "Restablecer"
+  },
+  "shortcutHint": {
+    "message": "Atallo: Alt+Maiús+L"
+  },
+  "meetBg": {
+    "message": "Iluminar o fondo de Meet"
+  },
+  "meetBgHint": {
+    "message": "Pode dificultar a lectura da hora e doutros textos de Meet."
+  },
+  "frame": {
+    "message": "Marco"
+  },
+  "thin": {
+    "message": "Fino"
+  },
+  "openLightWindow": {
+    "message": "Abrir xanela de luz"
+  },
+  "lightWindowTitle": {
+    "message": "Aro de luz"
+  },
+  "lightWindowHint": {
+    "message": "Move esta xanela a outra pantalla. Fai dobre clic para pantalla completa."
+  },
+  "sectionColor": {
+    "message": "Cor"
+  },
+  "sectionMeet": {
+    "message": "En Meet"
+  },
+  "saveDefaults": {
+    "message": "Gardar por defecto"
+  },
+  "saved": {
+    "message": "Gardado"
+  },
+  "factory": {
+    "message": "Valores de fábrica"
+  },
+  "undo": {
+    "message": "Desfacer"
+  },
+  "neutral": {
+    "message": "Neutra"
+  },
+  "statusSaved": {
+    "message": "Axustes gardados por defecto. Podes desfacelo."
+  },
+  "statusReset": {
+    "message": "Axustes restablecidos. Podes desfacelo."
+  },
+  "statusFactory": {
+    "message": "Valores de fábrica aplicados. Podes desfacelo."
+  },
+  "statusUndone": {
+    "message": "Desfeito."
+  },
+  "close": {
+    "message": "Pechar"
+  },
+  "closeLightWindows": {
+    "message": "Pechar xanelas de luz"
+  },
+  "openWindowsOne": {
+    "message": "1 xanela aberta"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ xanelas abertas",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Xanelas de luz pechadas."
+  }
+}

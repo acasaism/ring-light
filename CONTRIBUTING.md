@@ -45,10 +45,22 @@ A test should check what the user sees or what gets saved, through the same entr
 ## Guidelines
 
 - **Both browsers.** Use the `browser` namespace; `light.js` maps it to `chrome` on Chromium. Avoid APIs only one browser supports, or guard them.
-- **Translations.** Every visible text lives in `_locales/en` and `_locales/es`, with the same keys. The tests check this.
+- **Translations.** Every visible text lives in `_locales/<language>/messages.json`, and every language has the same keys as `en`. The tests check this. When you add a text, add it to every language (English is fine as a placeholder, and say so in the pull request).
 - **Accessibility.** Keep text contrast at 4.5:1 or more and control outlines at 3:1, give every control a label, and keep everything usable with the keyboard.
 - **Commits.** Use [Conventional Commits](https://www.conventionalcommits.org/), for example `feat(popup): add a preset` or `fix: keep the frame after leaving full screen`.
 - **Scope.** One change per pull request. Discuss large features in an issue first.
+
+## Translations
+
+The extension is available in English, Spanish, Catalan, Galician, Basque, French, German, Italian, Portuguese (Brazil and Portugal), Japanese and Traditional Chinese. Only the Spanish texts have been reviewed by a native speaker so far, so **corrections from native speakers are very welcome**, especially for Basque, Japanese and Chinese.
+
+To add a language:
+
+1. Copy `_locales/en` to `_locales/<code>` and translate each `message`. Keep `$COUNT$` and the `placeholders` block as they are.
+2. Add the code to the language list in `test.js` and run `node test.js`.
+3. Open the panel in that language and check that no text overflows.
+
+Use a code from [Chrome's supported locales](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales) when possible. Chrome ignores other codes and shows English instead, while Firefox accepts them; that is why Galician (`gl`) and Basque (`eu`) only work in Firefox. Chrome also has no plain `pt` or `zh`: use `pt_BR`, `pt_PT`, `zh_CN` or `zh_TW`.
 
 ## Reporting bugs
 

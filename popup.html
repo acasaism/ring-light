@@ -75,7 +75,8 @@
     .open-windows { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: var(--muted); }
     #closeWindows { width: auto; min-height: 24px; padding: 4px 6px; border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; }
     #closeWindows:hover { text-decoration: underline; }
-    .actions { display: flex; justify-content: center; gap: 4px; margin-top: 10px; }
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 4px; margin-top: 10px; } /* long translations wrap whole buttons, never mid-label */
+    .actions button { white-space: nowrap; }
     .actions button { width: auto; padding: 6px 8px; border: 0; background: none; color: var(--accent); font-size: 13px; }
     .actions button:hover { text-decoration: underline; }
     #factory { min-height: 24px; padding: 4px; border: 0; background: none; color: var(--faint); font-size: 11px; }

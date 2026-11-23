@@ -208,6 +208,19 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   const en = Object.keys(require("./_locales/en/messages.json")).sort();
   const es = Object.keys(require("./_locales/es/messages.json")).sort();
   assert.deepStrictEqual(es, en, "es and en define the same messages");
+  // Chrome only accepts regional Portuguese and Chinese codes (pt_BR, pt_PT, zh_TW), not plain pt or zh
+  const locales = fs.readdirSync(__dirname + "/_locales").sort();
+  // gl and eu work in Firefox only: Chrome ignores locales outside its list
+  assert.deepStrictEqual(locales, ["ca", "de", "en", "es", "eu", "fr", "gl", "it", "ja", "pt_BR", "pt_PT", "zh_TW"], "supported languages");
+  for (const l of locales) {
+    const m = require(`./_locales/${l}/messages.json`);
+    assert.deepStrictEqual(Object.keys(m).sort(), en, `${l} defines the same messages as en`);
+    for (const [k, v] of Object.entries(m)) assert.ok(v.message.trim(), `${l}: ${k} is not empty`);
+    assert.deepStrictEqual(m.openWindowsMany.placeholders, { count: { content: "$1" } }, `${l}: window count placeholder`);
+    assert.ok(m.openWindowsMany.message.includes("$COUNT$"), `${l}: window count shown`);
+    // WCAG 2.5.3: the spoken name of the close button contains its visible text
+    assert.ok(m.closeLightWindows.message.toLowerCase().includes(m.close.message.toLowerCase()), `${l}: close label contains visible text`);
+  }
   const used = [
     ...fs.readFileSync(__dirname + "/popup.html", "utf8").matchAll(/data-i18n(?:-label)?="(\w+)"/g),
     ...fs.readFileSync(__dirname + "/manifest.json", "utf8").matchAll(/__MSG_(\w+)__/g),

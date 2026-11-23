@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Google Meet 用リングライト"
+  },
+  "extDescription": {
+    "message": "Google Meet の通話中、調整できる光で通話画面を縁取り、画面をリングライトに変えます。"
+  },
+  "toggleCommand": {
+    "message": "リングライトのオン/オフ"
+  },
+  "on": {
+    "message": "ライトをオン"
+  },
+  "size": {
+    "message": "太さ"
+  },
+  "thick": {
+    "message": "太い"
+  },
+  "temperature": {
+    "message": "色温度"
+  },
+  "cool": {
+    "message": "寒色"
+  },
+  "warm": {
+    "message": "暖色"
+  },
+  "intensity": {
+    "message": "明るさ"
+  },
+  "dim": {
+    "message": "暗め"
+  },
+  "max": {
+    "message": "最大"
+  },
+  "reset": {
+    "message": "リセット"
+  },
+  "shortcutHint": {
+    "message": "ショートカット: Alt+Shift+L"
+  },
+  "meetBg": {
+    "message": "Meet の背景を明るくする"
+  },
+  "meetBgHint": {
+    "message": "時刻など Meet の一部の文字が読みにくくなる場合があります。"
+  },
+  "frame": {
+    "message": "フレーム"
+  },
+  "thin": {
+    "message": "細い"
+  },
+  "openLightWindow": {
+    "message": "ライトウィンドウを開く"
+  },
+  "lightWindowTitle": {
+    "message": "リングライト"
+  },
+  "lightWindowHint": {
+    "message": "このウィンドウを別の画面に移動してください。ダブルクリックで全画面表示になります。"
+  },
+  "sectionColor": {
+    "message": "色"
+  },
+  "sectionMeet": {
+    "message": "Meet 内"
+  },
+  "saveDefaults": {
+    "message": "デフォルトとして保存"
+  },
+  "saved": {
+    "message": "保存しました"
+  },
+  "factory": {
+    "message": "初期設定"
+  },
+  "undo": {
+    "message": "元に戻す"
+  },
+  "neutral": {
+    "message": "ニュートラル"
+  },
+  "statusSaved": {
+    "message": "設定をデフォルトとして保存しました。元に戻せます。"
+  },
+  "statusReset": {
+    "message": "設定をリセットしました。元に戻せます。"
+  },
+  "statusFactory": {
+    "message": "初期設定に戻しました。元に戻せます。"
+  },
+  "statusUndone": {
+    "message": "元に戻しました。"
+  },
+  "close": {
+    "message": "閉じる"
+  },
+  "closeLightWindows": {
+    "message": "ライトウィンドウを閉じる"
+  },
+  "openWindowsOne": {
+    "message": "開いているウィンドウ: 1"
+  },
+  "openWindowsMany": {
+    "message": "開いているウィンドウ: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "ライトウィンドウを閉じました。"
+  }
+}

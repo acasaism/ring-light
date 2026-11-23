@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Argi-eraztuna Google Meet-erako"
+  },
+  "extDescription": {
+    "message": "Pantaila argi-eraztun bihurtzen du Google Meet-eko deietan, deia argi doigarri batekin inguratuz."
+  },
+  "toggleCommand": {
+    "message": "Piztu edo itzali argi-eraztuna"
+  },
+  "on": {
+    "message": "Argia piztuta"
+  },
+  "size": {
+    "message": "Lodiera"
+  },
+  "thick": {
+    "message": "Lodia"
+  },
+  "temperature": {
+    "message": "Tenperatura"
+  },
+  "cool": {
+    "message": "Hotza"
+  },
+  "warm": {
+    "message": "Beroa"
+  },
+  "intensity": {
+    "message": "Intentsitatea"
+  },
+  "dim": {
+    "message": "Leuna"
+  },
+  "max": {
+    "message": "Gehienezkoa"
+  },
+  "reset": {
+    "message": "Berrezarri"
+  },
+  "shortcutHint": {
+    "message": "Lasterbidea: Alt+Maius+L"
+  },
+  "meetBg": {
+    "message": "Argiztatu Meet-en atzeko planoa"
+  },
+  "meetBgHint": {
+    "message": "Baliteke ordua eta Meet-eko beste testu batzuk irakurtzeko zailagoak izatea."
+  },
+  "frame": {
+    "message": "Markoa"
+  },
+  "thin": {
+    "message": "Mehea"
+  },
+  "openLightWindow": {
+    "message": "Ireki argi-leihoa"
+  },
+  "lightWindowTitle": {
+    "message": "Argi-eraztuna"
+  },
+  "lightWindowHint": {
+    "message": "Eraman leiho hau beste pantaila batera. Egin klik bikoitza pantaila osoan ikusteko."
+  },
+  "sectionColor": {
+    "message": "Kolorea"
+  },
+  "sectionMeet": {
+    "message": "Meet-en"
+  },
+  "saveDefaults": {
+    "message": "Gorde lehenetsi gisa"
+  },
+  "saved": {
+    "message": "Gordeta"
+  },
+  "factory": {
+    "message": "Fabrikako ezarpenak"
+  },
+  "undo": {
+    "message": "Desegin"
+  },
+  "neutral": {
+    "message": "Neutroa"
+  },
+  "statusSaved": {
+    "message": "Ezarpenak lehenetsi gisa gorde dira. Desegin dezakezu."
+  },
+  "statusReset": {
+    "message": "Ezarpenak berrezarri dira. Desegin dezakezu."
+  },
+  "statusFactory": {
+    "message": "Fabrikako ezarpenak aplikatu dira. Desegin dezakezu."
+  },
+  "statusUndone": {
+    "message": "Desegina."
+  },
+  "close": {
+    "message": "Itxi"
+  },
+  "closeLightWindows": {
+    "message": "Itxi argi-leihoak"
+  },
+  "openWindowsOne": {
+    "message": "Leiho 1 irekita"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ leiho irekita",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Argi-leihoak itxi dira."
+  }
+}

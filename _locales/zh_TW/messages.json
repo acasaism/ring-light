@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Google Meet 環形補光燈"
+  },
+  "extDescription": {
+    "message": "在 Google Meet 通話時以可調整的光線框住通話畫面，把螢幕變成環形補光燈。"
+  },
+  "toggleCommand": {
+    "message": "開啟或關閉環形補光燈"
+  },
+  "on": {
+    "message": "開啟燈光"
+  },
+  "size": {
+    "message": "粗細"
+  },
+  "thick": {
+    "message": "粗"
+  },
+  "temperature": {
+    "message": "色溫"
+  },
+  "cool": {
+    "message": "冷色"
+  },
+  "warm": {
+    "message": "暖色"
+  },
+  "intensity": {
+    "message": "亮度"
+  },
+  "dim": {
+    "message": "柔和"
+  },
+  "max": {
+    "message": "最亮"
+  },
+  "reset": {
+    "message": "重設"
+  },
+  "shortcutHint": {
+    "message": "快速鍵：Alt+Shift+L"
+  },
+  "meetBg": {
+    "message": "照亮 Meet 背景"
+  },
+  "meetBgHint": {
+    "message": "可能使時間等 Meet 文字較難閱讀。"
+  },
+  "frame": {
+    "message": "邊框"
+  },
+  "thin": {
+    "message": "細"
+  },
+  "openLightWindow": {
+    "message": "開啟補光視窗"
+  },
+  "lightWindowTitle": {
+    "message": "環形補光燈"
+  },
+  "lightWindowHint": {
+    "message": "將此視窗移到另一個螢幕。按兩下即可全螢幕顯示。"
+  },
+  "sectionColor": {
+    "message": "色彩"
+  },
+  "sectionMeet": {
+    "message": "在 Meet 中"
+  },
+  "saveDefaults": {
+    "message": "儲存為預設值"
+  },
+  "saved": {
+    "message": "已儲存"
+  },
+  "factory": {
+    "message": "原廠設定"
+  },
+  "undo": {
+    "message": "復原"
+  },
+  "neutral": {
+    "message": "中性"
+  },
+  "statusSaved": {
+    "message": "已將設定儲存為預設值，可以復原。"
+  },
+  "statusReset": {
+    "message": "已重設設定，可以復原。"
+  },
+  "statusFactory": {
+    "message": "已套用原廠設定，可以復原。"
+  },
+  "statusUndone": {
+    "message": "已復原。"
+  },
+  "close": {
+    "message": "關閉"
+  },
+  "closeLightWindows": {
+    "message": "關閉補光視窗"
+  },
+  "openWindowsOne": {
+    "message": "已開啟 1 個視窗"
+  },
+  "openWindowsMany": {
+    "message": "已開啟 $COUNT$ 個視窗",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "已關閉補光視窗。"
+  }
+}

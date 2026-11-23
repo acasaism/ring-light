@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Ring light para Google Meet"
+  },
+  "extDescription": {
+    "message": "Transforma o seu ecrã num ring light durante as chamadas do Google Meet, enquadrando a chamada com luz ajustável."
+  },
+  "toggleCommand": {
+    "message": "Ligar ou desligar o ring light"
+  },
+  "on": {
+    "message": "Luz ligada"
+  },
+  "size": {
+    "message": "Espessura"
+  },
+  "thick": {
+    "message": "Grossa"
+  },
+  "temperature": {
+    "message": "Temperatura"
+  },
+  "cool": {
+    "message": "Fria"
+  },
+  "warm": {
+    "message": "Quente"
+  },
+  "intensity": {
+    "message": "Intensidade"
+  },
+  "dim": {
+    "message": "Suave"
+  },
+  "max": {
+    "message": "Máxima"
+  },
+  "reset": {
+    "message": "Repor"
+  },
+  "shortcutHint": {
+    "message": "Atalho: Alt+Shift+L"
+  },
+  "meetBg": {
+    "message": "Iluminar o fundo do Meet"
+  },
+  "meetBgHint": {
+    "message": "Pode dificultar a leitura da hora e de outros textos do Meet."
+  },
+  "frame": {
+    "message": "Moldura"
+  },
+  "thin": {
+    "message": "Fina"
+  },
+  "openLightWindow": {
+    "message": "Abrir janela de luz"
+  },
+  "lightWindowTitle": {
+    "message": "Ring light"
+  },
+  "lightWindowHint": {
+    "message": "Mova esta janela para outro ecrã. Faça duplo clique para ecrã inteiro."
+  },
+  "sectionColor": {
+    "message": "Cor"
+  },
+  "sectionMeet": {
+    "message": "No Meet"
+  },
+  "saveDefaults": {
+    "message": "Guardar predefinição"
+  },
+  "saved": {
+    "message": "Guardado"
+  },
+  "factory": {
+    "message": "Definições de fábrica"
+  },
+  "undo": {
+    "message": "Anular"
+  },
+  "neutral": {
+    "message": "Neutra"
+  },
+  "statusSaved": {
+    "message": "Definições guardadas como predefinição. Pode anular."
+  },
+  "statusReset": {
+    "message": "Definições repostas. Pode anular."
+  },
+  "statusFactory": {
+    "message": "Definições de fábrica aplicadas. Pode anular."
+  },
+  "statusUndone": {
+    "message": "Anulado."
+  },
+  "close": {
+    "message": "Fechar"
+  },
+  "closeLightWindows": {
+    "message": "Fechar janelas de luz"
+  },
+  "openWindowsOne": {
+    "message": "1 janela aberta"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ janelas abertas",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Janelas de luz fechadas."
+  }
+}

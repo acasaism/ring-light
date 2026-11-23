@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "Ringlicht für Google Meet"
+  },
+  "extDescription": {
+    "message": "Macht deinen Bildschirm in Google-Meet-Anrufen zum Ringlicht, indem der Anruf mit einstellbarem Licht umrahmt wird."
+  },
+  "toggleCommand": {
+    "message": "Ringlicht ein- oder ausschalten"
+  },
+  "on": {
+    "message": "Licht an"
+  },
+  "size": {
+    "message": "Breite"
+  },
+  "thick": {
+    "message": "Breit"
+  },
+  "temperature": {
+    "message": "Farbtemperatur"
+  },
+  "cool": {
+    "message": "Kalt"
+  },
+  "warm": {
+    "message": "Warm"
+  },
+  "intensity": {
+    "message": "Helligkeit"
+  },
+  "dim": {
+    "message": "Gedämpft"
+  },
+  "max": {
+    "message": "Maximal"
+  },
+  "reset": {
+    "message": "Zurücksetzen"
+  },
+  "shortcutHint": {
+    "message": "Tastenkürzel: Alt+Umschalt+L"
+  },
+  "meetBg": {
+    "message": "Meet-Hintergrund aufhellen"
+  },
+  "meetBgHint": {
+    "message": "Uhrzeit und andere Texte in Meet können schwerer lesbar werden."
+  },
+  "frame": {
+    "message": "Rahmen"
+  },
+  "thin": {
+    "message": "Schmal"
+  },
+  "openLightWindow": {
+    "message": "Lichtfenster öffnen"
+  },
+  "lightWindowTitle": {
+    "message": "Ringlicht"
+  },
+  "lightWindowHint": {
+    "message": "Verschiebe dieses Fenster auf einen anderen Bildschirm. Doppelklick für Vollbild."
+  },
+  "sectionColor": {
+    "message": "Farbe"
+  },
+  "sectionMeet": {
+    "message": "In Meet"
+  },
+  "saveDefaults": {
+    "message": "Als Standard speichern"
+  },
+  "saved": {
+    "message": "Gespeichert"
+  },
+  "factory": {
+    "message": "Werkseinstellungen"
+  },
+  "undo": {
+    "message": "Rückgängig"
+  },
+  "neutral": {
+    "message": "Neutral"
+  },
+  "statusSaved": {
+    "message": "Einstellungen als Standard gespeichert. Du kannst das rückgängig machen."
+  },
+  "statusReset": {
+    "message": "Einstellungen zurückgesetzt. Du kannst das rückgängig machen."
+  },
+  "statusFactory": {
+    "message": "Werkseinstellungen angewendet. Du kannst das rückgängig machen."
+  },
+  "statusUndone": {
+    "message": "Rückgängig gemacht."
+  },
+  "close": {
+    "message": "Schließen"
+  },
+  "closeLightWindows": {
+    "message": "Lichtfenster schließen"
+  },
+  "openWindowsOne": {
+    "message": "1 Fenster offen"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ Fenster offen",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Lichtfenster geschlossen."
+  }
+}
