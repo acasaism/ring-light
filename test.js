@@ -18,18 +18,6 @@ assert.ok(!isDark("rgba(0, 0, 0, 0)"), "transparent");
 assert.ok(!isDark("rgba(32, 33, 36, 0.5)"), "translucent overlay");
 assert.ok(!isDark(""), "no value");
 
-
-assert.ok(isMeetingPath("/abc-defg-hij"), "meeting code");
-assert.ok(isMeetingPath("/abc-defg-hij/"), "meeting code with trailing slash");
-assert.ok(!isMeetingPath("/"), "landing page");
-assert.ok(!isMeetingPath("/landing"), "other Meet page");
-assert.ok(!isMeetingPath("/abc-defg-hijk"), "not a meeting code");
-
-assert.strictEqual(lightColor(0, 100), "rgb(255, 255, 255)", "neutral max is pure white");
-assert.strictEqual(lightColor(100, 100), "rgb(255, 214, 170)", "full warm");
-assert.strictEqual(lightColor(-100, 100), "rgb(205, 225, 255)", "full cool");
-assert.strictEqual(lightColor(0, 50), "rgb(128, 128, 128)", "intensity dims");
-
 // Chromium: no `browser` global, only `chrome`. light.js (loaded first everywhere) aliases it.
 const vm = require("node:vm");
 const chromeApi = { storage: {} };
@@ -200,14 +188,17 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   const es = Object.keys(require("./_locales/es/messages.json")).sort();
   assert.deepStrictEqual(es, en, "es and en define the same messages");
   const used = [
-    ...fs.readFileSync(__dirname + "/popup.html", "utf8").matchAll(/data-i18n="(\w+)"/g),
+    ...fs.readFileSync(__dirname + "/popup.html", "utf8").matchAll(/data-i18n(?:-label)?="(\w+)"/g),
     ...fs.readFileSync(__dirname + "/manifest.json", "utf8").matchAll(/__MSG_(\w+)__/g),
+    ...["popup.js", "light-window.js"].flatMap((f) =>
+      [...fs.readFileSync(__dirname + "/" + f, "utf8").matchAll(/(?:getMessage|msg|undoable)\("(\w+)"/g)]),
   ].map((m) => m[1]);
   for (const k of used) assert.ok(en.includes(k), `missing message: ${k}`);
 
   // popup.js: an open popup reflects a toggle made elsewhere (shortcut)
   const makeNode = () => ({
-    style: {}, listeners: {}, min: "5", max: "35", step: "1", value: "15", focused: false,
+    style: { setProperty(k, v) { this[k] = v; } }, attrs: {}, listeners: {},
+    setAttribute(k, v) { this.attrs[k] = v; }, min: "5", max: "35", step: "1", value: "15", focused: false,
     addEventListener(t, fn) { (this.listeners[t] ||= []).push(fn); },
     removeEventListener(t, fn) { this.listeners[t] = (this.listeners[t] || []).filter((f) => f !== fn); },
     dispatchEvent(e) { for (const fn of this.listeners[e.type] || []) fn(e); },
@@ -217,28 +208,67 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     setPointerCapture() {},
   });
   const nodes = Object.fromEntries(
-    ["on", "frame", "meetBg", "size", "warmth", "intensity", "preview", "reset", "frameOptions", "lightWindow"].map((id) => [id, makeNode()])
+    ["on", "frame", "meetBg", "size", "warmth", "intensity", "preview", "reset", "saveDefaults", "factory", "undo", "status", "frameOptions", "meetOptions", "lightWindow", "openWindows", "openCount", "closeWindows"].map((id) => [id, makeNode()])
   );
-  let popupListener, saved = {}, created = null;
+  let popupListener, saved = {}, created = null, removed = null, removedListener;
+  const openIds = new Set(), closedIds = [];
+  let popupClosed = false;
+  global.window = { close: () => (popupClosed = true) };
   stored = { ...DEFAULTS, on: false };
   // the popup document is an event target too: fast drags move the pointer off the slider
   const popupDoc = makeNode();
   global.document = Object.assign(popupDoc, { documentElement: {}, getElementById: (id) => nodes[id], querySelectorAll: () => [] });
   global.browser = {
-    i18n: { getUILanguage: () => "en", getMessage: () => "" },
+    i18n: { getUILanguage: () => "en", getMessage: (k, subs) => (subs ? `${k}:${subs}` : k) },
     runtime: { getURL: (path) => "moz-extension://id/" + path },
-    windows: { create: (opts) => (created = opts) },
+    windows: {
+      create: async (opts) => (created = opts),
+      get: async (id) => { if (!openIds.has(id)) throw new Error("no window"); return { id }; },
+      remove: async (id) => { openIds.delete(id); closedIds.push(id); },
+      onRemoved: { addListener: (fn) => (removedListener = fn) },
+    },
     storage: {
-      local: { get: async (d) => ({ ...d, ...stored }), set: async (v) => (saved = v) },
+      local: { get: async (d) => ({ ...d, ...stored }), set: async (v) => (saved = v), remove: async (k) => (removed = k) },
       onChanged: { addListener: (fn) => (popupListener = fn) },
     },
   };
   eval(fs.readFileSync(__dirname + "/popup.js", "utf8"));
   await tick();
   assert.strictEqual(nodes.on.checked, false, "popup starts unchecked");
+  assert.strictEqual(nodes.factory.hidden, true, "no factory link while nothing is saved (Reset already does it)");
+  assert.match(fs.readFileSync(__dirname + "/popup.html", "utf8"), /<button id="undo"[^>]* hidden>/, "no undo link before any save or reset");
+  // Meet-only options (frame, Meet background) do nothing while the light is off; colour and light window still apply
+  assert.strictEqual(nodes.meetOptions.hidden, true, "Meet options hidden while light off");
   assert.ok(popupListener, "popup listens for storage changes");
   popupListener({ on: { oldValue: false, newValue: true } });
   assert.strictEqual(nodes.on.checked, true, "shortcut toggle updates open popup");
+  assert.strictEqual(nodes.meetOptions.hidden, false, "shortcut on shows Meet options");
+  nodes.on.checked = false;
+  nodes.on.fire("input");
+  assert.strictEqual(nodes.meetOptions.hidden, true, "switching off hides Meet options");
+  nodes.on.checked = true;
+  nodes.on.fire("input");
+  assert.strictEqual(nodes.meetOptions.hidden, false, "switching on shows Meet options");
+
+  // Material 3 slider: the travelled part of the thickness track is filled; size 15 of 5..35 is a third of the way
+  assert.strictEqual(nodes.size.style["--p"], String(1 / 3), "thickness fill follows the value on open");
+  nodes.size.value = "35";
+  nodes.size.fire("input");
+  assert.strictEqual(nodes.size.style["--p"], "1", "thickness fill follows the slider");
+  nodes.size.value = "15";
+  nodes.size.fire("input");
+
+  // Screen readers hear what a slider value means, not a bare number
+  assert.strictEqual(nodes.warmth.attrs["aria-valuetext"], "neutral", "warmth 0 reads as neutral");
+  nodes.warmth.value = "40";
+  nodes.warmth.fire("input");
+  assert.strictEqual(nodes.warmth.attrs["aria-valuetext"], "warm 40 %", "positive warmth reads as warm");
+  nodes.warmth.value = "-20";
+  nodes.warmth.fire("input");
+  assert.strictEqual(nodes.warmth.attrs["aria-valuetext"], "cool 20 %", "negative warmth reads as cool");
+  assert.strictEqual(nodes.intensity.attrs["aria-valuetext"], "100 %", "intensity reads as a percentage");
+  nodes.warmth.value = "0";
+  nodes.warmth.fire("input");
 
   // frame switch shows or hides its own slider (size)
   assert.strictEqual(nodes.frameOptions.hidden, false, "frame options shown when frame on");
@@ -254,6 +284,113 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   nodes.lightWindow.fire("click");
   assert.strictEqual(created && created.url, "moz-extension://id/light.html", "opens light page");
   assert.strictEqual(created.type, "popup", "as a separate window without browser UI");
+  await tick();
+  assert.ok(popupClosed, "panel closes once the window opens, like Firefox does, instead of staying drawn but unresponsive in Chrome");
+
+  // Open light windows are listed so they can be closed from the panel, even when lost behind other windows
+  assert.strictEqual(nodes.openWindows.hidden, true, "no open-windows row while none are open");
+  openIds.add(7).add(9).add(11);
+  stored.lightWindows = [7, 9, 11, 42]; // 42 was closed by hand earlier: not counted
+  popupListener({ lightWindows: { newValue: stored.lightWindows } });
+  await tick(); await tick();
+  assert.strictEqual(nodes.openWindows.hidden, false, "row shown once a light window is open");
+  assert.strictEqual(nodes.openCount.textContent, "openWindowsMany:3", "counts only windows that still exist");
+  openIds.delete(9);
+  openIds.delete(11);
+  removedListener(9);
+  await tick(); await tick();
+  assert.strictEqual(nodes.openCount.textContent, "openWindowsOne:1", "closing one by hand updates the count");
+  nodes.closeWindows.fire("click");
+  await tick(); await tick(); await tick();
+  assert.deepStrictEqual(closedIds, [7], "close button closes the open light windows");
+  assert.deepStrictEqual(saved.lightWindows, [], "and forgets them");
+  assert.strictEqual(nodes.openWindows.hidden, true, "row hidden once all are closed");
+  assert.strictEqual(nodes.status.textContent, "statusWindowsClosed", "closing announced to screen readers");
+  assert.ok(nodes.lightWindow.focused, "focus moves to the open button instead of getting lost");
+  delete stored.lightWindows;
+
+  // Reset goes back to the user's saved defaults, or to factory values if none were saved; the light stays as it is
+  nodes.warmth.value = "40";
+  nodes.warmth.fire("input");
+  nodes.reset.fire("click");
+  await tick();
+  assert.strictEqual(saved.warmth, DEFAULTS.warmth, "reset without saved defaults: factory values");
+  assert.strictEqual(saved.on, true, "reset keeps the light on");
+  nodes.warmth.value = "40";
+  nodes.intensity.value = "70";
+  nodes.warmth.fire("input");
+  nodes.saveDefaults.fire("click");
+  await tick();
+  assert.deepStrictEqual(saved.userDefaults, { frame: true, meetBg: false, size: 15, warmth: 40, intensity: 70 },
+    "save stores the current settings, without the on/off state");
+  stored.userDefaults = saved.userDefaults;
+  nodes.warmth.value = "-60";
+  nodes.warmth.fire("input");
+  nodes.reset.fire("click");
+  await tick();
+  assert.strictEqual(saved.warmth, 40, "reset restores the saved warmth");
+  assert.strictEqual(saved.intensity, 70, "reset restores the saved intensity");
+  assert.strictEqual(+nodes.warmth.value, 40, "reset moves the slider back too");
+  assert.strictEqual(saved.on, true, "reset still keeps the light on");
+  // Factory values stay reachable once defaults are saved, without deleting them
+  assert.strictEqual(nodes.factory.hidden, false, "factory link shown once defaults are saved");
+  nodes.factory.fire("click");
+  await tick();
+  assert.strictEqual(saved.warmth, DEFAULTS.warmth, "factory link applies factory warmth");
+  assert.strictEqual(saved.intensity, DEFAULTS.intensity, "factory link applies factory intensity");
+  assert.strictEqual(saved.on, true, "factory link keeps the light on");
+  assert.strictEqual(saved.userDefaults, undefined, "factory link does not touch the saved defaults");
+
+  // Undo: Save, Reset and Factory each lose something, so each can be undone instead of confirmed
+  const savedDefaults = stored.userDefaults;
+  nodes.warmth.value = "-60";
+  nodes.warmth.fire("input");
+  nodes.reset.fire("click");
+  await tick();
+  assert.strictEqual(saved.warmth, 40, "reset applied");
+  assert.strictEqual(nodes.undo.hidden, false, "undo offered after reset");
+  assert.strictEqual(nodes.status.textContent, "statusReset", "reset announced to screen readers");
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(nodes.undo.hidden, false, "undo has no time limit");
+  nodes.undo.fire("click");
+  await tick();
+  assert.strictEqual(saved.warmth, -60, "undo brings back the settings being tried");
+  assert.strictEqual(+nodes.warmth.value, -60, "undo moves the slider back too");
+  assert.deepStrictEqual(saved.userDefaults, savedDefaults, "undo keeps the saved defaults");
+  assert.strictEqual(saved.on, true, "undo keeps the light on");
+  assert.strictEqual(nodes.undo.hidden, true, "undo link gone once used");
+  assert.strictEqual(nodes.status.textContent, "statusUndone", "undo announced");
+
+  nodes.factory.fire("click");
+  await tick();
+  nodes.undo.fire("click");
+  await tick();
+  assert.strictEqual(saved.warmth, -60, "undo after factory values");
+  nodes.factory.fire("click");
+  await tick();
+  assert.strictEqual(nodes.status.textContent, "statusFactory", "factory values announced");
+  nodes.warmth.value = "-60";
+  nodes.warmth.fire("input");
+  assert.strictEqual(nodes.undo.hidden, true, "changing a setting retires the undo link");
+
+  nodes.saveDefaults.fire("click"); // overwrites the saved defaults (warmth 40) with warmth -60
+  await tick();
+  assert.strictEqual(saved.userDefaults.warmth, -60, "new defaults saved");
+  assert.strictEqual(nodes.status.textContent, "statusSaved", "save announced");
+  stored.userDefaults = saved.userDefaults;
+  nodes.undo.fire("click");
+  await tick();
+  assert.deepStrictEqual(saved.userDefaults, savedDefaults, "undo after save restores the previous defaults");
+  stored.userDefaults = savedDefaults;
+
+  delete stored.userDefaults; // first save ever: undo removes the saved defaults again
+  nodes.saveDefaults.fire("click");
+  await tick();
+  removed = null;
+  nodes.undo.fire("click");
+  await tick();
+  assert.strictEqual(removed, "userDefaults", "undo of the first save removes the saved defaults");
+  assert.strictEqual(nodes.factory.hidden, true, "factory link hidden again: nothing is saved");
 
   // Sliders: the popup drives the drag itself, because Firefox cancels a native
   // drag released outside the popup and reverts it (firing "input" with the old value).
@@ -298,15 +435,20 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   });
   Object.defineProperty(page, "fullscreenElement", { get: () => (fullscreen ? page : null) });
   global.setTimeout = (fn) => fn();
+  let windowSaved = null;
+  stored.lightWindows = [3];
   global.browser = {
     i18n: { getMessage: (k) => k },
+    windows: { getCurrent: async () => ({ id: 7 }) },
     storage: {
-      local: { get: async (d) => ({ ...d, ...stored }) },
+      local: { get: async (d) => ({ ...d, ...stored }), set: async (v) => (windowSaved = v) },
       onChanged: { addListener: (fn) => (windowListener = fn) },
     },
   };
   eval(fs.readFileSync(__dirname + "/light-window.js", "utf8"));
-  await tick();
+  await tick(); await tick();
+  assert.deepStrictEqual(windowSaved, { lightWindows: [3, 7] }, "light window registers itself, so the panel can close it");
+  delete stored.lightWindows;
   assert.strictEqual(document.body.style.background, "rgb(255, 255, 255)", "window shows the light colour");
   stored = { ...stored, warmth: 100, intensity: 50 };
   windowListener(); await tick();

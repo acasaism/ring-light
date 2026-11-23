@@ -3,37 +3,93 @@
 <head>
   <meta charset="utf-8">
   <style>
-    body { font: 14px system-ui, sans-serif; width: 240px; margin: 12px; }
-    label { display: block; margin: 12px 0 4px; }
-    input[type=range] { width: 100%; }
-    .row { display: flex; justify-content: space-between; font-size: 12px; color: #666; }
+    :root {
+      color-scheme: light dark;
+      --bg: #fff; --fg: #1f1f1f; --muted: #5f6368; --faint: #5f6368; --line: #e3e3e3; --track-edge: #8e918f;
+      --track: #8e918f; --accent: #0b57d0; --accent-hover: #0842a0; --on-accent: #fff;
+      --outline: #747775; --switch-track: #e3e3e3;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #202124; --fg: #e8eaed; --muted: #bdc1c6; --faint: #9aa0a6; --line: #3c4043; --track-edge: #9aa0a6;
+        --track: #8e918f; --accent: #a8c7fa; --accent-hover: #d3e3fd; --on-accent: #062e6f;
+        --outline: #8e918f; --switch-track: #333537;
+      }
+    }
+    body { font: 14px system-ui, sans-serif; width: 240px; margin: 0; padding: 14px 16px 12px; background: var(--bg); color: var(--fg); }
+    label { display: block; margin: 12px 0 2px; }
+    .row { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); }
     .switch-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer; }
+    .master { margin-top: 0; font-size: 15px; font-weight: 600; }
+    [hidden] { display: none !important; } /* flex rows below must still hide */
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
     /* Knob drawn with a gradient: Firefox does not render ::before on inputs. */
     input[role=switch] {
       appearance: none; flex: none; width: 36px; height: 20px; margin: 0; border-radius: 10px; cursor: pointer;
-      background: radial-gradient(circle at 10px 50%, #fff 7px, transparent 7.5px) #9aa0a6;
+      background: radial-gradient(circle at 10px 50%, var(--outline) 6px, transparent 6.5px) var(--switch-track);
+      box-shadow: inset 0 0 0 2px var(--outline); /* Material 3 off state; the outline keeps 3:1 against the page */
       transition: background-color 0.15s;
     }
-    input[role=switch]:checked { background: radial-gradient(circle at 26px 50%, #fff 7px, transparent 7.5px) #0b57d0; }
-    input[role=switch]:focus-visible { outline: 2px solid #0b57d0; outline-offset: 2px; }
-    #preview { height: 24px; border: 1px solid #ccc; border-radius: 4px; margin-top: 12px; }
-    #reset, #lightWindow { margin-top: 12px; width: 100%; }
-    #reset { margin-top: 6px; }
-    .hint { margin-top: 4px; font-size: 12px; color: #666; }
-    .center { text-align: center; margin-top: 8px; }
+    input[role=switch]:checked { background: radial-gradient(circle at 26px 50%, var(--on-accent) 7px, transparent 7.5px) var(--accent); box-shadow: none; }
+
+    /* Custom sliders: the track shows what the slider changes. The thumb stays 16px wide,
+       which valueFromX() in light.js assumes for the popup-driven drag. */
+    input[type=range] {
+      appearance: none; display: block; width: 100%; height: 16px; margin: 4px 0; cursor: pointer;
+      --strip: linear-gradient(var(--track), var(--track));
+      background: var(--strip) center / calc(100% - 2px) 4px no-repeat,
+                  linear-gradient(var(--track-edge), var(--track-edge)) center / 100% 6px no-repeat;
+      border-radius: 3px;
+    }
+    #warmth { --strip: linear-gradient(to right, #a8c8ff, #fff, #ffc98a); }
+    #intensity { --strip: linear-gradient(to right, #4d4d4d, #fff); }
+    /* Material 3: travelled part in the accent colour, up to the thumb centre (--p is set by popup.js). */
+    #size { background: linear-gradient(to right, var(--accent) calc(8px + (100% - 16px) * var(--p, 0)), var(--track) 0) center / 100% 4px no-repeat; }
+    input[type=range]::-moz-range-track { background: transparent; }
+    /* Material 3 handle: filled with the accent colour. The ring in the background colour keeps it
+       visible on the pale end of the colour tracks. */
+    input[type=range]::-moz-range-thumb {
+      width: 16px; height: 16px; border: 0; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 0 2px var(--bg);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none; width: 16px; height: 16px; border: 0; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 0 2px var(--bg);
+    }
+
+    h2 {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line);
+      font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);
+    }
+    /* The resulting light colour, next to the section that sets it. */
+    #preview { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--track-edge); }
+    #frameOptions { margin-left: 4px; padding-left: 10px; border-left: 2px solid var(--line); }
+    #frameOptions label { margin-top: 8px; }
+    .hint { margin-top: 4px; font-size: 12px; color: var(--muted); }
+
+    button { font: inherit; cursor: pointer; border-radius: 8px; width: 100%; }
+    #lightWindow { margin-top: 16px; padding: 8px; border: 0; background: var(--accent); color: var(--on-accent); font-weight: 500; }
+    #lightWindow:hover { background: var(--accent-hover); }
+    .open-windows { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+    #closeWindows { width: auto; min-height: 24px; padding: 4px 6px; border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; }
+    #closeWindows:hover { text-decoration: underline; }
+    .actions { display: flex; justify-content: center; gap: 4px; margin-top: 10px; }
+    .actions button { width: auto; padding: 6px 8px; border: 0; background: none; color: var(--accent); font-size: 13px; }
+    .actions button:hover { text-decoration: underline; }
+    #factory { min-height: 24px; padding: 4px; border: 0; background: none; color: var(--faint); font-size: 11px; }
+    #factory:hover { text-decoration: underline; }
+    #undo { padding: 4px; border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; }
+    #undo:hover { text-decoration: underline; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .center { text-align: center; margin-top: 6px; font-size: 11px; color: var(--faint); }
   </style>
 </head>
 <body>
-  <label class="switch-row"><span data-i18n="on"></span><input type="checkbox" role="switch" id="on"></label>
+  <label class="switch-row master"><span data-i18n="on"></span><input type="checkbox" role="switch" id="on"></label>
 
-  <label class="switch-row"><span data-i18n="frame"></span><input type="checkbox" role="switch" id="frame"></label>
-  <div id="frameOptions">
-    <label for="size" data-i18n="size"></label>
-    <input type="range" id="size" min="5" max="35" step="1">
-    <div class="row"><span data-i18n="thin"></span><span data-i18n="thick"></span></div>
-
-  </div>
-
+  <h2><span data-i18n="sectionColor"></span><span id="preview" aria-hidden="true"></span></h2>
   <label for="warmth" data-i18n="temperature"></label>
   <input type="range" id="warmth" min="-100" max="100" step="5">
   <div class="row"><span data-i18n="cool"></span><span data-i18n="warm"></span></div>
@@ -42,12 +98,32 @@
   <input type="range" id="intensity" min="30" max="100" step="5">
   <div class="row"><span data-i18n="dim"></span><span data-i18n="max"></span></div>
 
-  <label class="switch-row"><span data-i18n="meetBg"></span><input type="checkbox" role="switch" id="meetBg"></label>
-  <div class="hint" data-i18n="meetBgHint"></div>
+  <!-- Meet-only options: hidden while the light is off, since they do nothing then. Last, so hiding them moves nothing above. -->
+  <div id="meetOptions">
+    <h2 data-i18n="sectionMeet"></h2>
+    <label class="switch-row"><span data-i18n="frame"></span><input type="checkbox" role="switch" id="frame"></label>
+    <div id="frameOptions">
+      <label for="size" data-i18n="size"></label>
+      <input type="range" id="size" min="5" max="35" step="1">
+      <div class="row"><span data-i18n="thin"></span><span data-i18n="thick"></span></div>
+    </div>
 
-  <div id="preview"></div>
+    <label class="switch-row"><span data-i18n="meetBg"></span><input type="checkbox" role="switch" id="meetBg"></label>
+    <div class="hint" data-i18n="meetBgHint"></div>
+  </div>
+
   <button id="lightWindow" data-i18n="openLightWindow"></button>
-  <button id="reset" data-i18n="reset"></button>
+  <div id="openWindows" class="open-windows" hidden>
+    <span id="openCount"></span><span aria-hidden="true">·</span>
+    <button id="closeWindows" data-i18n="close" data-i18n-label="closeLightWindows"></button>
+  </div>
+  <div class="actions">
+    <button id="saveDefaults" data-i18n="saveDefaults"></button>
+    <button id="reset" data-i18n="reset"></button>
+  </div>
+  <button id="factory" data-i18n="factory" hidden></button>
+  <button id="undo" data-i18n="undo" hidden></button>
+  <div id="status" role="status" class="sr-only"></div>
   <div class="hint center" data-i18n="shortcutHint"></div>
 
   <script src="light.js"></script>

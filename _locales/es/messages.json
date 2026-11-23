@@ -9,10 +9,10 @@
     "message": "Encender o apagar el aro de luz"
   },
   "on": {
-    "message": "Aro de luz encendido"
+    "message": "Luz encendida"
   },
   "size": {
-    "message": "Tamaño del marco"
+    "message": "Grosor"
   },
   "thick": {
     "message": "Grueso"
@@ -36,7 +36,7 @@
     "message": "Máxima"
   },
   "reset": {
-    "message": "Restablecer valores"
+    "message": "Restablecer"
   },
   "shortcutHint": {
     "message": "Atajo: Alt+Mayús+L"
@@ -45,7 +45,7 @@
     "message": "Iluminar el fondo de Meet"
   },
   "meetBgHint": {
-    "message": "Convierte las zonas oscuras de Meet en luz. Algún texto de Meet, como la hora, puede leerse peor."
+    "message": "Puede dificultar leer la hora y otros textos de Meet."
   },
   "frame": {
     "message": "Marco"
@@ -61,5 +61,58 @@
   },
   "lightWindowHint": {
     "message": "Mueve esta ventana a otra pantalla. Doble clic para pantalla completa."
+  },
+  "sectionColor": {
+    "message": "Color"
+  },
+  "sectionMeet": {
+    "message": "En Meet"
+  },
+  "saveDefaults": {
+    "message": "Guardar por defecto"
+  },
+  "saved": {
+    "message": "Guardado"
+  },
+  "factory": {
+    "message": "Valores de fábrica"
+  },
+  "undo": {
+    "message": "Deshacer"
+  },
+  "neutral": {
+    "message": "Neutra"
+  },
+  "statusSaved": {
+    "message": "Ajustes guardados por defecto. Puedes deshacerlo."
+  },
+  "statusReset": {
+    "message": "Ajustes restablecidos. Puedes deshacerlo."
+  },
+  "statusFactory": {
+    "message": "Valores de fábrica aplicados. Puedes deshacerlo."
+  },
+  "statusUndone": {
+    "message": "Deshecho."
+  },
+  "close": {
+    "message": "Cerrar"
+  },
+  "closeLightWindows": {
+    "message": "Cerrar ventanas de luz"
+  },
+  "openWindowsOne": {
+    "message": "1 ventana abierta"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ ventanas abiertas",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Ventanas de luz cerradas."
   }
 }

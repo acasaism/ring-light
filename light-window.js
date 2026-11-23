@@ -13,6 +13,11 @@ function load() {
 load();
 browser.storage.onChanged.addListener(load);
 
+// Registers this window so the extension panel can count and close it.
+browser.windows.getCurrent().then(({ id }) =>
+  browser.storage.local.get({ lightWindows: [] }).then(({ lightWindows }) =>
+    browser.storage.local.set({ lightWindows: [...new Set([...lightWindows, id])] })));
+
 document.addEventListener("dblclick", () => {
   if (document.fullscreenElement) document.exitFullscreen();
   else document.documentElement.requestFullscreen();

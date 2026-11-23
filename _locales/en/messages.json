@@ -9,10 +9,10 @@
     "message": "Turn the ring light on or off"
   },
   "on": {
-    "message": "Ring light on"
+    "message": "Light on"
   },
   "size": {
-    "message": "Frame size"
+    "message": "Thickness"
   },
   "thick": {
     "message": "Thick"
@@ -36,7 +36,7 @@
     "message": "Max"
   },
   "reset": {
-    "message": "Reset to defaults"
+    "message": "Reset"
   },
   "shortcutHint": {
     "message": "Shortcut: Alt+Shift+L"
@@ -45,7 +45,7 @@
     "message": "Light up Meet's background"
   },
   "meetBgHint": {
-    "message": "Turns Meet's dark areas into light. Some Meet text, like the time, may become hard to read."
+    "message": "May make the time and other Meet text harder to read."
   },
   "frame": {
     "message": "Frame"
@@ -61,5 +61,58 @@
   },
   "lightWindowHint": {
     "message": "Move this window to another screen. Double-click for full screen."
+  },
+  "sectionColor": {
+    "message": "Color"
+  },
+  "sectionMeet": {
+    "message": "In Meet"
+  },
+  "saveDefaults": {
+    "message": "Save as default"
+  },
+  "saved": {
+    "message": "Saved"
+  },
+  "factory": {
+    "message": "Factory settings"
+  },
+  "undo": {
+    "message": "Undo"
+  },
+  "neutral": {
+    "message": "Neutral"
+  },
+  "statusSaved": {
+    "message": "Settings saved as default. You can undo it."
+  },
+  "statusReset": {
+    "message": "Settings reset. You can undo it."
+  },
+  "statusFactory": {
+    "message": "Factory settings applied. You can undo it."
+  },
+  "statusUndone": {
+    "message": "Undone."
+  },
+  "close": {
+    "message": "Close"
+  },
+  "closeLightWindows": {
+    "message": "Close light windows"
+  },
+  "openWindowsOne": {
+    "message": "1 window open"
+  },
+  "openWindowsMany": {
+    "message": "$COUNT$ windows open",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusWindowsClosed": {
+    "message": "Light windows closed."
   }
 }
