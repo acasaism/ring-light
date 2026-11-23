@@ -2,7 +2,7 @@
 
 A browser extension that turns your screen into a ring light during Google Meet calls. It frames the call with a soft, adjustable light so your face is lit even without a lamp in front of you. Works in Firefox, Chrome, Edge, Opera and Brave.
 
-<p align="center"><img src="docs/demo.gif" alt="Animation: a dark video call; the Ring Light panel opens from the toolbar, Light on is switched on, a frame of light appears around the call and your silhouette brightens; the temperature slider then moves from cool to warm." width="800"><br><a href="docs/store/promo-video.mp4">Watch the full video</a></p>
+<p align="center"><img src="docs/demo.gif" alt="Animation: a dark video call; the Ring Light panel opens from the toolbar, Light on is switched on, a frame of light appears around the call and your silhouette brightens; the temperature slider then moves from cool to warm." width="800"><br><a href="https://youtu.be/ApHeht_c__s">Watch the full video on YouTube</a></p>
 
 ## Quick start
 
