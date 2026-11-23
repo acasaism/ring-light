@@ -2,7 +2,7 @@
 
 A browser extension that turns your screen into a ring light during Google Meet calls. It frames the call with a soft, adjustable light so your face is lit even without a lamp in front of you. Works in Firefox, Chrome, Edge, Opera and Brave.
 
-<p align="center"><img src="docs/store/screenshot-2.png" alt="A video call shown side by side without and with Ring Light: with it, the call shrinks slightly and a soft frame of warm white light fills the edges of the screen." width="800"></p>
+<p align="center"><img src="docs/demo.gif" alt="Animation: a dark video call; the Ring Light panel opens from the toolbar, Light on is switched on, a frame of light appears around the call and your silhouette brightens; the temperature slider then moves from cool to warm." width="800"><br><a href="docs/store/promo-video.mp4">Watch the full video</a></p>
 
 ## Quick start
 
@@ -32,7 +32,7 @@ The toolbar icon lights up only in the tab where the light is applied. The panel
 
 | | |
 |:-:|:-:|
-| <a href="docs/store/screenshot-1.png"><img src="docs/store/screenshot-1.png" alt="A call framed by soft light, with the settings panel open next to it." width="400"></a><br>A soft frame of light around the call | <a href="docs/store/screenshot-3.png"><img src="docs/store/screenshot-3.png" alt="A call framed by a thick, warm amber light, with the panel showing temperature set towards warm and a thick frame." width="400"></a><br>Warm or cool, soft or bright |
+| <a href="docs/store/screenshot-2.png"><img src="docs/store/screenshot-2.png" alt="A video call shown side by side without and with Ring Light: with it, the call shrinks slightly and a soft frame of warm white light fills the edges of the screen." width="400"></a><br>Without and with Ring Light | <a href="docs/store/screenshot-3.png"><img src="docs/store/screenshot-3.png" alt="A call framed by a thick, warm amber light, with the panel showing temperature set towards warm and a thick frame." width="400"></a><br>Warm or cool, soft or bright |
 | <a href="docs/store/screenshot-4.png"><img src="docs/store/screenshot-4.png" alt="A call without a frame whose dark background has turned light, with Light up Meet's background turned on in the panel." width="400"></a><br>Light up Meet's dark background | <a href="docs/store/screenshot-5.png"><img src="docs/store/screenshot-5.png" alt="A desktop with the framed call and a separate window filled with light, and the panel showing one light window open." width="400"></a><br>A light window for a second screen |
 
 The call in these screenshots is a mock-up; the light effect and the panel are the real ones.
