@@ -37,6 +37,7 @@ const swCtx = vm.createContext({
     action: { setIcon() {} },
     runtime: { onMessage: { addListener() {} } },
     storage: { local: { get: async (d) => d }, onChanged: { addListener() {} } },
+    tabs: { onRemoved: { addListener() {} } },
   },
   importScripts: (...files) => {
     imported.push(...files);
@@ -60,6 +61,7 @@ assert.deepStrictEqual(cameraScript.js, ["camera.js"], "camera.js in its own ent
 assert.strictEqual(cameraScript.world, "MAIN", "camera.js runs in the page's main world");
 assert.strictEqual(cameraScript.run_at, "document_start", "camera.js runs before the page's scripts");
 assert.deepStrictEqual(cameraScript.matches, ["https://meet.google.com/*"], "camera.js only on Meet");
+assert.strictEqual(cameraScript.all_frames, true, "camera.js also in Meet's own frames, which may open the camera");
 assert.deepStrictEqual(manifest.permissions, ["storage"], "no new permissions");
 // The store zip lists its files one by one: every script the manifest loads must be in it
 const zipped = fs.readFileSync(__dirname + "/scripts/build.sh", "utf8").match(/^zip .*$/m)[0].split(/\s+/);
@@ -166,23 +168,14 @@ global.DEFAULTS = DEFAULTS;
 global.lightColor = lightColor;
 global.isMeetingPath = isMeetingPath;
 global.location = { pathname: "/abc-defg-hij", origin: "https://meet.google.com" };
-const pageEvents = {}; // window listeners: messages from camera.js, pagehide
-global.addEventListener = (type, fn) => (pageEvents[type] = fn);
+global.addEventListener = () => {}; // camera messages and pagehide: tested below, across tabs
 let poll;
 const sent = [];
 global.setInterval = (fn) => (poll = fn);
 global.browser = {
-  runtime: { sendMessage: async (m) => sent.push(m) },
+  runtime: { sendMessage: async (m) => sent.push(m), onMessage: { addListener() {} } },
   storage: {
-    local: {
-      get: async (d) => ({ ...d, ...stored }),
-      // like the browser: listeners get what changed
-      set: async (v) => {
-        const changes = Object.fromEntries(Object.entries(v).map(([k, newValue]) => [k, { oldValue: stored[k], newValue }]));
-        stored = { ...stored, ...v };
-        listener(changes);
-      },
-    },
+    local: { get: async (d) => ({ ...d, ...stored }) },
     onChanged: { addListener: (fn) => (listener = fn) },
   },
 };
@@ -248,150 +241,315 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(body.style.transform + body.style.clipPath + html.style.background, "", "off restores page");
   assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "switch off: icon off");
 
-  // Turn on with the camera: camera.js (page world) reports the camera; content.js writes the global "on"
-  const camera = (on, media = on) => pageEvents.message({ origin: "https://meet.google.com", data: { ringLight: { camera: on, media } } });
-  const userSets = async (v) => { await browser.storage.local.set(v); await tick(); };
-  const realNow = Date.now;
-  let clock = 1e6;
-  Date.now = () => clock;
-  const wait = async (ms) => { clock += ms; poll(); await tick(); };
-  stored = { ...DEFAULTS, on: false };
-  listener(); await tick();
-  camera(true); await tick();
-  assert.strictEqual(stored.on, false, "option off (default): the camera does not touch the light");
-  camera(false); await tick();
-
-  await userSets({ auto: true });
-  assert.strictEqual(stored.on, false, "enabling the option without a camera changes nothing");
-  camera(true); await tick();
-  assert.strictEqual(stored.on, true, "camera starts in a meeting: light on");
-  assert.strictEqual(body.style.transform, "scale(0.85)", "with the current settings");
-  camera(true); await tick(); // heartbeat while the camera stays on
-  assert.strictEqual(stored.on, true, "stays on while the camera is on");
-  camera(false); await tick();
-  await wait(1000);
-  assert.strictEqual(stored.on, true, "camera off for 1 s: still on (Meet may be restarting the camera)");
-  camera(true); await tick();
-  await wait(1500);
-  camera(false); await tick();
-  await wait(1000);
-  assert.strictEqual(stored.on, true, "short gaps do not add up");
-  await wait(1000);
-  assert.strictEqual(stored.on, false, "camera off for 2 s: light off");
-  await wait(5000);
-  assert.strictEqual(stored.on, false, "stays off");
-
-  // Turned off by hand during the call: stays off until the camera starts again
-  camera(true); await tick();
-  assert.strictEqual(stored.on, true, "camera starts again: light on");
-  await userSets({ on: false }); // panel or shortcut
-  camera(true); await tick();
-  await wait(1000);
-  camera(true); await tick();
-  assert.strictEqual(stored.on, false, "manual off sticks while the camera stays on");
-  camera(false); await tick();
-  await wait(3000);
-  camera(true); await tick();
-  assert.strictEqual(stored.on, true, "camera starts again: light on again");
-  camera(false); await tick();
-  await wait(2000);
-  assert.strictEqual(stored.on, false, "and off with the camera");
-
-  // Turned on by hand: the camera never turns it off
-  await userSets({ on: true });
-  camera(true); await tick();
-  camera(false); await tick();
-  await wait(5000);
-  assert.strictEqual(stored.on, true, "light turned on by hand stays on when the camera stops");
-  await userSets({ on: false });
-
-  // Only inside a meeting
-  location.pathname = "/";
-  poll();
-  camera(true); await tick();
-  assert.strictEqual(stored.on, false, "camera on the Meet home page: light stays off");
-  location.pathname = "/abc-defg-hij";
-  poll(); await tick();
-  assert.strictEqual(stored.on, true, "joining the meeting with the camera on: light on");
-  camera(false); await tick();
-  await wait(2000);
-  assert.strictEqual(stored.on, false, "off again with the camera");
-
-  // Enabling the option with the camera already on turns the light on; disabling it leaves the light alone
-  await userSets({ auto: false });
-  camera(true); await tick();
-  assert.strictEqual(stored.on, false, "option off: camera ignored");
-  await userSets({ auto: true });
-  assert.strictEqual(stored.on, true, "enabling the option with the camera on: light on");
-  await userSets({ auto: false });
-  assert.strictEqual(stored.on, true, "disabling the option leaves the light on");
-  camera(false); await tick();
-  await wait(5000);
-  assert.strictEqual(stored.on, true, "and the camera no longer turns it off");
-  await userSets({ on: false, auto: true });
-
-  // Leaving the page while the camera had turned the light on (best effort)
-  camera(true); await tick();
-  assert.strictEqual(stored.on, true, "camera on: light on");
-  pageEvents.pagehide();
-  await tick();
-  assert.strictEqual(stored.on, false, "closing the tab turns off the light the camera turned on");
-  camera(false); await tick();
-  await userSets({ on: true });
-  pageEvents.pagehide();
-  await tick();
-  assert.strictEqual(stored.on, true, "closing the tab leaves a light turned on by hand");
-  await userSets({ on: false });
-
-  // Messages come from the page: only well-formed ones from Meet itself count
-  for (const msg of [
-    { origin: "https://evil.example", data: { ringLight: { camera: true, media: true } } },
-    { origin: "https://meet.google.com", data: { ringLight: { camera: "yes", media: true } } },
-    { origin: "https://meet.google.com", data: { ringLight: { camera: true } } },
-    { origin: "https://meet.google.com", data: { ringLight: null } },
-    { origin: "https://meet.google.com", data: { camera: true, media: true } },
-    { origin: "https://meet.google.com", data: "ringLight" },
-    { origin: "https://meet.google.com", data: null },
-  ]) {
-    pageEvents.message(msg); await tick();
-    assert.strictEqual(stored.on, false, `ignored: ${JSON.stringify(msg)}`);
+  // "Turn on with the camera" across the extension: Meet tabs (light.js + content.js, each in its own page),
+  // background.js and one shared storage, wired like the browser
+  function extension() {
+    let storage = { ...DEFAULTS };
+    let clock = 1e6, onBackgroundMessage, onCommand;
+    const changeListeners = [], removedListeners = [], tabs = new Map();
+    const local = {
+      get: async (d) => ({ ...d, ...storage }),
+      // like the browser: every listener gets what changed
+      set: async (v) => {
+        const changes = Object.fromEntries(Object.entries(v).map(([k, newValue]) => [k, { oldValue: storage[k], newValue }]));
+        storage = { ...storage, ...v };
+        for (const fn of changeListeners) fn(changes, "local");
+      },
+    };
+    const onChanged = { addListener: (fn) => changeListeners.push(fn) };
+    const run = (ctx, file) => vm.runInContext(fs.readFileSync(__dirname + "/" + file, "utf8"), ctx);
+    const bg = vm.createContext({
+      browser: {
+        commands: { onCommand: { addListener: (fn) => (onCommand = fn) } },
+        action: { setIcon() {} },
+        runtime: { onMessage: { addListener: (fn) => (onBackgroundMessage = fn) } },
+        storage: { local, onChanged },
+        tabs: {
+          query: async (q) => {
+            assert.strictEqual(JSON.stringify(q), JSON.stringify({ url: "https://meet.google.com/*" }), "asks only Meet tabs (host permission, no tabs permission)");
+            return [...tabs.keys()].map((id) => ({ id }));
+          },
+          // a tab without a listener (crashed, or loaded before the extension) cannot answer
+          sendMessage: (id, msg) => new Promise((resolve, reject) => {
+            const t = tabs.get(id);
+            if (!t || !t.onMessage) return reject(new Error("Could not establish connection. Receiving end does not exist."));
+            let answered = false;
+            t.onMessage(msg, {}, (r) => { answered = true; resolve(r); });
+            if (!answered) resolve(undefined);
+          }),
+          onRemoved: { addListener: (fn) => removedListeners.push(fn) },
+        },
+      },
+    });
+    run(bg, "light.js");
+    run(bg, "background.js");
+    return {
+      get storage() { return storage; },
+      user: async (v) => { await local.set(v); await tick(); }, // the panel
+      shortcut: () => onCommand("toggle-light"),
+      wait: async (ms) => { clock += ms; for (const t of tabs.values()) t.poll(); await tick(); },
+      tab(id) {
+        const t = { id, events: {}, body: { style: {} }, location: { pathname: "/abc-defg-hij", origin: "https://meet.google.com" } };
+        const gone = () => Promise.reject(new Error("Extension context invalidated."));
+        const ctx = vm.createContext({
+          document: { documentElement: { style: {} }, body: t.body, querySelectorAll: () => [] },
+          location: t.location,
+          addEventListener: (type, fn) => (t.events[type] = fn),
+          setInterval: (fn) => (t.poll = fn),
+          now: () => clock,
+          browser: {
+            runtime: {
+              sendMessage: (m) => (t.orphaned ? gone() : Promise.resolve().then(() => onBackgroundMessage(m, { tab: { id } }))),
+              onMessage: { addListener: (fn) => (t.onMessage = fn) },
+            },
+            storage: {
+              local: { get: (d) => (t.orphaned ? gone() : local.get(d)), set: (v) => (t.orphaned ? gone() : local.set(v)) },
+              onChanged: { addListener: (fn) => changeListeners.push((c) => t.orphaned || fn(c)) },
+            },
+          },
+        });
+        vm.runInContext("Date.now = now", ctx);
+        run(ctx, "light.js");
+        run(ctx, "content.js");
+        tabs.set(id, t);
+        t.camera = (on) => t.events.message({ origin: "https://meet.google.com", data: { ringLight: { camera: on } } });
+        // the extension was updated or reloaded: this old content script can no longer reach it
+        t.orphan = () => { t.orphaned = true; t.onMessage = null; };
+        t.close = async () => {
+          t.events.pagehide();
+          await tick();
+          tabs.delete(id);
+          for (const fn of removedListeners) fn(id);
+          await tick();
+        };
+        return t;
+      },
+    };
   }
-  Date.now = realNow;
-  stored = { ...DEFAULTS, on: false };
-  listener(); await tick();
 
-  // camera.js runs in Meet's own world: it wraps getUserMedia and track clones, and polls the tracks
+  // One Meet tab
+  {
+    const ext = extension();
+    const a = ext.tab(1);
+    await tick();
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, false, "option off (default): the camera does not touch the light");
+    a.camera(false); await tick();
+
+    await ext.user({ auto: true });
+    assert.strictEqual(ext.storage.on, false, "enabling the option without a camera changes nothing");
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts in a meeting: light on");
+    assert.strictEqual(a.body.style.transform, "scale(0.85)", "with the current settings");
+    a.camera(true); await tick(); // heartbeat while the camera stays on
+    assert.strictEqual(ext.storage.on, true, "stays on while the camera is on");
+    a.camera(false); await tick();
+    await ext.wait(1000);
+    assert.strictEqual(ext.storage.on, true, "camera off for 1 s: still on (Meet may be restarting the camera)");
+    a.camera(true); await tick();
+    await ext.wait(1500);
+    a.camera(false); await tick();
+    await ext.wait(1000);
+    assert.strictEqual(ext.storage.on, true, "short gaps do not add up");
+    await ext.wait(1000);
+    assert.strictEqual(ext.storage.on, false, "camera off for 2 s: light off");
+    await ext.wait(5000);
+    assert.strictEqual(ext.storage.on, false, "stays off");
+
+    // Turned off by hand during the call: stays off until the camera starts again
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts again: light on");
+    await ext.user({ on: false }); // panel or shortcut
+    a.camera(true); await tick();
+    await ext.wait(1000);
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, false, "manual off sticks while the camera stays on");
+    // Meet restarting the track is not a new start, so it does not relight a light turned off by hand
+    a.camera(false); await tick();
+    await ext.wait(1000);
+    a.camera(true); await tick();
+    await ext.wait(1000);
+    assert.strictEqual(ext.storage.on, false, "manual off sticks through a short camera restart");
+    a.camera(false); await tick();
+    await ext.wait(3000);
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts again: light on again");
+    a.camera(false); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "and off with the camera");
+
+    // Turned on by hand: the camera never turns it off
+    await ext.user({ on: true });
+    a.camera(true); await tick();
+    a.camera(false); await tick();
+    await ext.wait(5000);
+    assert.strictEqual(ext.storage.on, true, "light turned on by hand stays on when the camera stops");
+    await ext.user({ on: false });
+    // Alt+Shift+L just as the camera starts: the light was turned on by hand
+    ext.shortcut();
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "shortcut and camera at once: light on");
+    a.camera(false); await tick();
+    await ext.wait(5000);
+    assert.strictEqual(ext.storage.on, true, "a light turned on by the shortcut as the camera started stays on");
+    await ext.user({ on: false });
+
+    // Only inside a meeting
+    a.location.pathname = "/";
+    a.poll();
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, false, "camera on the Meet home page: light stays off");
+    a.location.pathname = "/abc-defg-hij";
+    a.poll(); await tick();
+    assert.strictEqual(ext.storage.on, true, "joining the meeting with the camera on: light on");
+    a.camera(false); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "off again with the camera");
+
+    // Enabling the option with the camera already on turns the light on; disabling it leaves the light alone
+    await ext.user({ auto: false });
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, false, "option off: camera ignored");
+    await ext.user({ auto: true });
+    assert.strictEqual(ext.storage.on, true, "enabling the option with the camera on: light on");
+    await ext.user({ auto: false });
+    assert.strictEqual(ext.storage.on, true, "disabling the option leaves the light on");
+    a.camera(false); await tick();
+    await ext.wait(5000);
+    assert.strictEqual(ext.storage.on, true, "and the camera no longer turns it off");
+    await ext.user({ auto: true });
+    a.camera(true); await tick();
+    a.camera(false); await tick();
+    await ext.wait(5000);
+    assert.strictEqual(ext.storage.on, true, "not even after enabling the option again");
+    await ext.user({ on: false });
+
+    // Leaving the page while the camera had turned the light on (best effort)
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera on: light on");
+    a.events.pagehide();
+    await tick();
+    assert.strictEqual(ext.storage.on, false, "closing the tab turns off the light the camera turned on");
+    a.camera(false); await tick();
+    await ext.user({ on: true });
+    a.events.pagehide();
+    await tick();
+    assert.strictEqual(ext.storage.on, true, "closing the tab leaves a light turned on by hand");
+    await ext.user({ on: false });
+
+    // Messages come from the page: only well-formed ones from Meet itself count
+    for (const msg of [
+      { origin: "https://evil.example", data: { ringLight: { camera: true } } },
+      { origin: "https://meet.google.com", data: { ringLight: { camera: "yes" } } },
+      { origin: "https://meet.google.com", data: { ringLight: {} } },
+      { origin: "https://meet.google.com", data: { ringLight: null } },
+      { origin: "https://meet.google.com", data: { camera: true } },
+      { origin: "https://meet.google.com", data: "ringLight" },
+      { origin: "https://meet.google.com", data: null },
+    ]) {
+      a.events.message(msg); await tick();
+      assert.strictEqual(ext.storage.on, false, `ignored: ${JSON.stringify(msg)}`);
+    }
+  }
+
+  // Several Meet tabs: the light is global, so the camera turns it off only when no tab still has its camera on
+  {
+    const ext = extension();
+    const a = ext.tab(1), b = ext.tab(2);
+    await ext.user({ auto: true });
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts in tab A: light on");
+    b.camera(true); await tick();
+    a.camera(false); await tick();
+    await ext.wait(3000);
+    assert.strictEqual(ext.storage.on, true, "A's camera stops while B's is on: light stays on");
+    b.camera(false); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "the last camera stops: light off, although B did not turn it on");
+
+    a.camera(true); b.camera(true); await tick();
+    await a.close();
+    assert.strictEqual(ext.storage.on, true, "closing a tab while another still has its camera on: light stays on");
+    await b.close();
+    assert.strictEqual(ext.storage.on, false, "closing the last tab with the camera: light off");
+
+    const c = ext.tab(3), d = ext.tab(4);
+    c.camera(true); d.camera(true); await tick();
+    await ext.user({ on: false });
+    c.camera(false); await tick();
+    await ext.wait(1000);
+    c.camera(true); d.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, false, "manual off sticks in every tab while the cameras stay on");
+    c.camera(false); d.camera(false); await tick();
+    await ext.wait(2000);
+    await ext.user({ on: true });
+    c.camera(true); d.camera(true); await tick();
+    c.camera(false); d.camera(false); await tick();
+    await ext.wait(5000);
+    assert.strictEqual(ext.storage.on, true, "light turned on by hand: no camera turns it off");
+    await ext.user({ on: false });
+
+    // A Meet tab left over from before an extension update cannot answer and is not counted
+    const old = ext.tab(5);
+    old.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts: light on");
+    old.orphan();
+    const unhandled = [];
+    const track = (e) => unhandled.push(e);
+    process.on("unhandledRejection", track);
+    old.camera(false); await tick();
+    await ext.wait(2000);
+    await tick();
+    process.off("unhandledRejection", track);
+    assert.deepStrictEqual(unhandled, [], "an orphaned content script fails quietly");
+    c.camera(true); await tick();
+    c.camera(false); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "the orphaned tab does not keep the light on");
+  }
+
+  // camera.js runs in Meet's own world: it wraps getUserMedia and track and stream clones, and polls the camera tracks
   // (stop() fires no "ended" event and turning a track off fires nothing)
   class FakeTrack {
     constructor(kind) { Object.assign(this, { kind, readyState: "live", enabled: true, muted: false }); }
     stop() { this.readyState = "ended"; }
     clone() { return new FakeTrack(this.kind); }
   }
+  // like browsers, a stream clone copies its tracks without calling MediaStreamTrack.prototype.clone
+  class FakeStream {
+    constructor(tracks) { this.tracks = tracks; }
+    getTracks() { return this.tracks; }
+    clone() { return new FakeStream(this.tracks.map((t) => new FakeTrack(t.kind))); }
+  }
   class FakeMediaDevices {
     async getUserMedia(c) {
-      const tracks = [c.video && new FakeTrack("video"), c.audio && new FakeTrack("audio")].filter(Boolean);
-      return { getTracks: () => tracks };
+      return new FakeStream([c.video && new FakeTrack("video"), c.audio && new FakeTrack("audio")].filter(Boolean));
     }
   }
   const posted = [];
-  let cameraTick;
+  let cameraTick = null; // the running 1 s timer, if any
   vm.runInContext(fs.readFileSync(__dirname + "/camera.js", "utf8"), vm.createContext({
     MediaDevices: FakeMediaDevices,
     MediaStreamTrack: FakeTrack,
-    setInterval: (fn, ms) => { assert.strictEqual(ms, 1000, "polls every second"); cameraTick = fn; },
+    MediaStream: FakeStream,
+    setInterval: (fn, ms) => { assert.strictEqual(ms, 1000, "polls every second"); cameraTick = fn; return 1; },
+    clearInterval: (id) => { assert.strictEqual(id, 1, "stops its own timer"); cameraTick = null; },
     top: { postMessage: (m, target) => posted.push({ ...m.ringLight, target }) },
   }));
-  const report = () => { posted.length = 0; cameraTick(); return posted[0]; };
-  assert.strictEqual(report(), undefined, "no messages before the page uses the camera");
+  const report = () => { posted.length = 0; cameraTick?.(); return posted[0]; };
+  assert.strictEqual(cameraTick, null, "no timer before the page uses the camera");
   const devices = new FakeMediaDevices();
+  const mic = await devices.getUserMedia({ audio: true });
+  assert.strictEqual(cameraTick, null, "microphone only: no timer, no messages");
+  mic.getTracks()[0].stop();
   const stream = await devices.getUserMedia({ video: true, audio: true });
   const [video, audio] = stream.getTracks();
   assert.strictEqual(video.kind, "video", "the page still gets its stream");
-  assert.deepStrictEqual(report(), { camera: true, media: true, target: "*" }, "camera on reported");
-  assert.deepStrictEqual(report(), { camera: true, media: true, target: "*" }, "repeated every second while tracks exist");
+  assert.deepStrictEqual(report(), { camera: true, target: "*" }, "camera on reported, nothing else");
+  assert.deepStrictEqual(report(), { camera: true, target: "*" }, "repeated every second while a camera track exists");
   // Meet may turn the camera off by disabling the track...
   video.enabled = false;
-  assert.deepStrictEqual(report(), { camera: false, media: true, target: "*" }, "disabled camera track: camera off");
+  assert.deepStrictEqual(report(), { camera: false, target: "*" }, "disabled camera track: camera off");
   video.enabled = true;
   assert.strictEqual(report().camera, true, "enabled again: camera on");
   video.muted = true;
@@ -399,15 +557,18 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   video.muted = false;
   // ...or by stopping it
   const copy = video.clone();
+  const effects = stream.clone(); // e.g. Meet's effects path
   video.stop();
   assert.strictEqual(report().camera, true, "a live clone of the camera track keeps the camera on");
   copy.stop();
-  assert.deepStrictEqual(report(), { camera: false, media: true, target: "*" }, "stopped camera track: camera off, microphone still live");
+  assert.strictEqual(report().camera, true, "a live copy made by cloning the camera's stream keeps the camera on");
+  for (const t of effects.getTracks()) t.stop();
+  assert.deepStrictEqual(report(), { camera: false, target: "*" }, "every camera track stopped: camera off, reported once");
+  assert.strictEqual(cameraTick, null, "then the timer stops, although the microphone is still live");
   audio.stop();
-  assert.deepStrictEqual(report(), { camera: false, media: false, target: "*" }, "everything stopped: reported once");
-  assert.strictEqual(report(), undefined, "then silent");
   new FakeTrack("video").clone(); // e.g. a canvas track the page made itself
-  assert.strictEqual(report(), undefined, "clones of tracks not from getUserMedia are ignored");
+  new FakeStream([new FakeTrack("video")]).clone();
+  assert.strictEqual(cameraTick, null, "clones of tracks and streams not from getUserMedia are ignored");
   const again = await devices.getUserMedia({ video: true });
   assert.strictEqual(report().camera, true, "camera started again");
   again.getTracks()[0].stop();
@@ -420,10 +581,15 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     commands: { onCommand: { addListener: (fn) => (command = fn) } },
     action: { setIcon: ({ path, tabId }) => (tabId === undefined ? (icon = path) : (tabIcons[tabId] = path)) },
     runtime: { onMessage: { addListener: (fn) => (messageListener = fn) } },
+    tabs: { onRemoved: { addListener() {} } },
     storage: {
       local: {
         get: async (d) => ({ ...d, ...stored }),
-        set: async (v) => { stored = { ...stored, ...v }; storageListener?.(); },
+        set: async (v) => {
+          const changes = Object.fromEntries(Object.entries(v).map(([k, newValue]) => [k, { oldValue: stored[k], newValue }]));
+          stored = { ...stored, ...v };
+          storageListener?.(changes);
+        },
       },
       onChanged: { addListener: (fn) => (storageListener = fn) },
     },
@@ -645,6 +811,22 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(saved.auto, false, "factory link turns the camera switch off (off by default)");
   assert.strictEqual(saved.on, true, "factory link keeps the light on");
   assert.strictEqual(saved.userDefaults, undefined, "factory link does not touch the saved defaults");
+
+  // Defaults saved before the camera switch existed have no "auto": Reset leaves the switch as it is
+  const currentDefaults = stored.userDefaults;
+  stored.userDefaults = { frame: true, meetBg: false, size: 15, warmth: 40, intensity: 70 };
+  nodes.auto.checked = true;
+  nodes.auto.fire("input");
+  nodes.reset.fire("click");
+  await tick();
+  assert.strictEqual(saved.auto, true, "reset with older saved defaults keeps the camera switch on");
+  assert.strictEqual(saved.warmth, 40, "and still restores the saved warmth");
+  nodes.auto.checked = false;
+  nodes.auto.fire("input");
+  nodes.reset.fire("click");
+  await tick();
+  assert.strictEqual(saved.auto, false, "and keeps it off");
+  stored.userDefaults = currentDefaults;
 
   // Undo: Save, Reset and Factory each lose something, so each can be undone instead of confirmed
   const savedDefaults = stored.userDefaults;
