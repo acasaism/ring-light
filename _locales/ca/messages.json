@@ -11,6 +11,12 @@
   "on": {
     "message": "Llum encesa"
   },
+  "auto": {
+    "message": "Encén amb la càmera"
+  },
+  "autoHint": {
+    "message": "La llum es torna a apagar quan s'apaga la càmera."
+  },
   "size": {
     "message": "Gruix"
   },

@@ -11,6 +11,12 @@
   "on": {
     "message": "Luz ligada"
   },
+  "auto": {
+    "message": "Ligar com a câmera"
+  },
+  "autoHint": {
+    "message": "A luz desliga de novo quando a câmera é desligada."
+  },
   "size": {
     "message": "Espessura"
   },

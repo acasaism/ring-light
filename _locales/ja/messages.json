@@ -11,6 +11,12 @@
   "on": {
     "message": "ライトをオン"
   },
+  "auto": {
+    "message": "カメラと連動してオン"
+  },
+  "autoHint": {
+    "message": "カメラが止まると、ライトも再びオフになります。"
+  },
   "size": {
     "message": "太さ"
   },

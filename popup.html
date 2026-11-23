@@ -89,6 +89,9 @@
 </head>
 <body>
   <label class="switch-row master"><span data-i18n="on"></span><input type="checkbox" role="switch" id="on"></label>
+  <!-- Outside the Meet options: it matters most while the light is off. -->
+  <label class="switch-row"><span data-i18n="auto"></span><input type="checkbox" role="switch" id="auto" aria-describedby="autoHint"></label>
+  <div class="hint" id="autoHint" data-i18n="autoHint"></div>
 
   <h2><span data-i18n="sectionColor"></span><span id="preview" aria-hidden="true"></span></h2>
   <label for="warmth" data-i18n="temperature"></label>

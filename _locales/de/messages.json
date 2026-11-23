@@ -11,6 +11,12 @@
   "on": {
     "message": "Licht an"
   },
+  "auto": {
+    "message": "Mit der Kamera einschalten"
+  },
+  "autoHint": {
+    "message": "Das Licht geht wieder aus, wenn die Kamera ausgeht."
+  },
   "size": {
     "message": "Breite"
   },
