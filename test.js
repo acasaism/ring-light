@@ -65,6 +65,9 @@ const platformHosts = Object.keys(PLATFORMS).map((h) => `https://${h}/*`);
 assert.ok(platformHosts.includes("https://meet.jit.si/*"), "Jitsi Meet is a supported platform");
 // Zoom serves its web client both at app.zoom.us and at zoom.us (/wc/<id>/join answers 200 there, no redirect)
 assert.ok(platformHosts.includes("https://app.zoom.us/*") && platformHosts.includes("https://zoom.us/*"), "Zoom web client is a supported platform");
+// Teams: work and school accounts (teams.microsoft.com, which redirects to teams.cloud.microsoft from 2026) and personal (teams.live.com)
+for (const host of ["teams.microsoft.com", "teams.cloud.microsoft", "teams.live.com"])
+  assert.ok(platformHosts.includes(`https://${host}/*`), `Microsoft Teams is a supported platform: ${host}`);
 assert.deepStrictEqual(manifest.host_permissions, platformHosts, "host permission for every platform");
 assert.deepStrictEqual(manifest.content_scripts.find((c) => c.js.includes("content.js")).matches, platformHosts, "content.js on every platform");
 assert.deepStrictEqual(cameraScript.matches, platformHosts, "camera.js on every platform");
@@ -106,6 +109,17 @@ for (const host of ["app.zoom.us", "zoom.us"]) {
     assert.ok(!isMeeting(zoomAt(p)), `not a Zoom meeting: ${host}${p}`);
 }
 assert.ok(!isMeeting(at("us02web.zoom.us")("/wc/123456789/join")), "Zoom company subdomains are not covered");
+// Teams (NOT VERIFIED in a real meeting): the address does not change in a call, so a call is the page holding a live
+// microphone or camera track (isMeeting's second argument, from camera.js), wherever it is
+for (const host of ["teams.microsoft.com", "teams.cloud.microsoft", "teams.live.com"]) {
+  for (const p of ["/v2/", "/", "/l/meetup-join/19%3ameeting_abc%40thread.v2/0"]) {
+    assert.ok(!isMeeting(at(host)(p)), `Teams without live media is not a call: ${host}${p}`);
+    assert.ok(isMeeting(at(host)(p), true), `Teams with live media is a call: ${host}${p}`);
+  }
+}
+assert.ok(!isMeeting(meetAt("/"), true) && !isMeeting(jitsiAt("/"), true) && !isMeeting(at("app.zoom.us")("/wc/home"), true),
+  "live media does not make a call on the apps detected by address");
+assert.ok(!isMeeting(at("example.com")("/"), true), "nor on unknown sites");
 assert.ok(!isMeeting(meetAt("/MyTeamStandup")), "Jitsi rooms are not Meet meetings");
 assert.ok(!isMeeting(at("example.com")("/abc-defg-hij")), "unknown site");
 
@@ -401,6 +415,8 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
         run(ctx, "content.js");
         tabs.set(id, t);
         t.camera = (on) => t.events.message({ origin: t.location.origin, data: { ringLight: { camera: on } } });
+        // camera.js on Teams also says whether any microphone or camera track is live
+        t.media = (camera, media) => t.events.message({ origin: t.location.origin, data: { ringLight: { camera, media } } });
         // the extension was updated or reloaded: this old content script can no longer reach it
         t.orphan = () => { t.orphaned = true; t.onMessage = null; };
         t.close = async () => {
@@ -647,6 +663,64 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     assert.strictEqual(ext.storage.on, false, "Zoom's camera stops: light off");
   }
 
+  // Microsoft Teams (NOT VERIFIED in a real meeting): the light applies while the page holds a live microphone or camera
+  {
+    const ext = extension();
+    const teams = ext.tab(1, "teams.microsoft.com", "/v2/");
+    await ext.user({ on: true });
+    teams.poll();
+    assert.strictEqual(teams.body.style.transform, "", "Teams without a call: no light, although the switch is on");
+    teams.media(false, true); await tick();
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "microphone live (camera off): in a call, light applied at once");
+    teams.media(false, true); await tick(); // heartbeat
+    teams.media(true, true); await tick();
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "camera on too: still applied");
+    teams.media(false, false); await tick();
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "media stopped for 1 s: still a call (device switch, track restart)");
+    teams.media(false, true); await tick();
+    await ext.wait(1500);
+    teams.media(false, false); await tick();
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "short gaps do not add up");
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "", "media stopped for 2 s: the call is over, light removed");
+    // Page messages are untrusted: a media flag that is not a boolean is ignored, and so is the whole message
+    teams.events.message({ origin: "https://teams.microsoft.com", data: { ringLight: { camera: false, media: "yes" } } });
+    teams.events.message({ origin: "https://evil.example", data: { ringLight: { camera: false, media: true } } });
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "", "malformed or foreign media messages ignored");
+    await ext.user({ on: false });
+
+    // Turn on with the camera: the camera starts in a Teams call, and the light follows it like on Meet
+    await ext.user({ auto: true });
+    teams.media(true, true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts in a Teams call: light on");
+    teams.media(false, true); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "camera off while the call goes on: light off after 2 s");
+    teams.media(true, true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera on again: light on");
+    // background.js asks every Teams tab too: one with its camera on keeps the light on when a Meet camera stops
+    const meet = ext.tab(2);
+    meet.camera(true); await tick();
+    meet.camera(false); await tick();
+    await ext.wait(3000);
+    assert.strictEqual(ext.storage.on, true, "Meet's camera stops while Teams' is on: light stays on");
+    teams.media(false, false); await tick(); // leaves the call
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "leaving the Teams call: light off");
+    assert.strictEqual(teams.body.style.transform, "", "and no frame left on Teams");
+
+    // On Meet, media alone means nothing: Meet's calls are found by address and camera.js sends no media there
+    meet.location.pathname = "/";
+    meet.poll();
+    await ext.user({ on: true });
+    meet.media(false, true); await tick();
+    meet.poll();
+    assert.strictEqual(meet.body.style.transform, "", "a media message on Meet's home page does not make it a call");
+  }
+
   // camera.js runs in Meet's own world: it wraps getUserMedia and track and stream clones, and polls the camera tracks
   // (stop() fires no "ended" event and turning a track off fires nothing)
   class FakeTrack {
@@ -674,7 +748,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     setInterval: (fn, ms) => { assert.strictEqual(ms, 1000, "polls every second"); cameraTick = fn; return 1; },
     clearInterval: (id) => { assert.strictEqual(id, 1, "stops its own timer"); cameraTick = null; },
     // only a same-origin top page may hear it: on a site embedding meet.jit.si, `top` is that site
-    location: { origin: "https://meet.jit.si" },
+    location: { hostname: "meet.jit.si", origin: "https://meet.jit.si" },
     top: { postMessage: (m, target) => posted.push({ ...m.ringLight, target }) },
   }));
   const report = () => {
@@ -719,6 +793,68 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(report().camera, true, "camera started again");
   again.getTracks()[0].stop();
   assert.strictEqual(report().camera, false, "and stopped");
+
+  // camera.js in each app's page (fresh fakes, as every page has its own world). Only where the app is detected by
+  // live media (Teams) does it also watch the microphone and report "media"; elsewhere only the camera, as before.
+  function cameraPage(hostname) {
+    class Track {
+      constructor(kind) { Object.assign(this, { kind, readyState: "live", enabled: true, muted: false }); }
+      stop() { this.readyState = "ended"; }
+      clone() { return new Track(this.kind); }
+    }
+    class Stream {
+      constructor(tracks) { this.tracks = tracks; }
+      getTracks() { return this.tracks; }
+      clone() { return new Stream(this.tracks.map((t) => new Track(t.kind))); }
+    }
+    class Devices {
+      async getUserMedia(c) { return new Stream([c.video && new Track("video"), c.audio && new Track("audio")].filter(Boolean)); }
+    }
+    const page = { posted: [], timer: null, devices: new Devices() };
+    vm.runInContext(fs.readFileSync(__dirname + "/camera.js", "utf8"), vm.createContext({
+      MediaDevices: Devices, MediaStreamTrack: Track, MediaStream: Stream,
+      setInterval: (fn) => ((page.timer = fn), 1),
+      clearInterval: () => (page.timer = null),
+      location: { hostname, origin: `https://${hostname}` },
+      top: { postMessage: (m, target) => page.posted.push({ ...m.ringLight, target }) },
+    }));
+    page.report = () => {
+      page.posted.length = 0;
+      page.timer?.();
+      for (const m of page.posted) assert.strictEqual(m.target, `https://${hostname}`, "posted to the page's own origin");
+      const { target, ...m } = page.posted[0] || {};
+      return page.posted[0] && m;
+    };
+    return page;
+  }
+  for (const [host, platform] of Object.entries(PLATFORMS)) {
+    const page = cameraPage(host);
+    const mic = await page.devices.getUserMedia({ audio: true });
+    if (platform.meeting === "media") assert.deepStrictEqual(page.report(), { camera: false, media: true }, `${host}: live microphone reported`);
+    else assert.strictEqual(page.timer, null, `${host}: microphone only, no timer and no messages (camera only, as before)`);
+    mic.getTracks()[0].stop();
+    const cam = await page.devices.getUserMedia({ video: true });
+    assert.deepStrictEqual(page.report(), platform.meeting === "media" ? { camera: true, media: true } : { camera: true },
+      `${host}: camera reported${platform.meeting === "media" ? " with media" : ", nothing else"}`);
+    cam.getTracks()[0].stop();
+  }
+  {
+    const page = cameraPage("teams.live.com");
+    const stream = await page.devices.getUserMedia({ video: true, audio: true });
+    const [video, audio] = stream.getTracks();
+    assert.deepStrictEqual(page.report(), { camera: true, media: true }, "Teams: camera and microphone live");
+    video.enabled = false;
+    assert.deepStrictEqual(page.report(), { camera: false, media: true }, "Teams: camera turned off, still in the call");
+    video.stop();
+    audio.enabled = false; // muted in Teams: still in the call
+    assert.deepStrictEqual(page.report(), { camera: false, media: true }, "Teams: muted microphone still counts as a call");
+    const copy = audio.clone();
+    audio.stop();
+    assert.deepStrictEqual(page.report(), { camera: false, media: true }, "Teams: a live copy of the microphone keeps the call");
+    copy.stop();
+    assert.deepStrictEqual(page.report(), { camera: false, media: false }, "Teams: every track stopped, reported once");
+    assert.strictEqual(page.timer, null, "then the timer stops");
+  }
 
   // background.js: shortcut toggles the light; the icon is lit per tab, where Meet applies the light
   let command, storageListener, icon, messageListener;

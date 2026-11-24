@@ -17,8 +17,12 @@ function lightColor(warmth, intensity) {
 // /wc/join/<id> (redirects to the first). Served at both its hosts; the /j/<id> launcher page is not a call.
 const ZOOM = { meeting: /^\/wc\/(\d+\/(join|start)|join\/\d+)(\/|$)/, meetBg: false };
 
+// Microsoft Teams, NOT VERIFIED in a real meeting: its address does not change reliably in a call, so a call is a page
+// holding a live microphone or camera track ("media", reported by camera.js, which lists these hosts too).
+const TEAMS = { meeting: "media", meetBg: false };
+
 // Supported video call apps, by hostname. Adding one: an entry here, its host permission and content script matches
-// in manifest.json, and tests (see CONTRIBUTING.md). meeting: the paths of a call, not the app's home page;
+// in manifest.json, and tests (see CONTRIBUTING.md). meeting: the paths of a call, not the app's home page, or "media";
 // meetBg: whether "Light up Meet's background" applies (it looks for Meet's own dark areas).
 const PLATFORMS = {
   // Meeting rooms (and their waiting room) live at /abc-defg-hij.
@@ -31,12 +35,18 @@ const PLATFORMS = {
   },
   "app.zoom.us": ZOOM,
   "zoom.us": ZOOM,
+  // Work and school accounts (teams.microsoft.com redirects to teams.cloud.microsoft during 2026) and personal ones.
+  "teams.microsoft.com": TEAMS,
+  "teams.cloud.microsoft": TEAMS,
+  "teams.live.com": TEAMS,
 };
 
-// loc: window.location, or anything with hostname and pathname.
-function isMeeting(loc) {
+// loc: window.location, or anything with hostname and pathname. media: the page holds a live microphone or camera
+// track (only used by apps whose meeting is "media").
+function isMeeting(loc, media = false) {
   const platform = PLATFORMS[loc.hostname];
-  return !!platform && platform.meeting.test(loc.pathname);
+  if (!platform) return false;
+  return platform.meeting === "media" ? media : platform.meeting.test(loc.pathname);
 }
 
 // Opaque and dark, like Meet's call background. Translucent overlays are left alone.

@@ -2,6 +2,7 @@
 // so no control is covered. Only inside a meeting, not on the landing page.
 let settings = DEFAULTS;
 let path = location.pathname;
+let meeting = false; // last rendered: inside a call
 let iconActive; // last state reported, so colour changes do not resend it
 
 // The toolbar icon is lit only in the tab where the light is applied; background.js sets it per tab.
@@ -40,7 +41,8 @@ function render() {
   const s = settings;
   const html = document.documentElement.style;
   const body = document.body.style;
-  if (!s.on || !isMeeting(location)) {
+  meeting = inMeeting();
+  if (!s.on || !meeting) {
     html.background = body.transform = body.transformOrigin = body.clipPath = "";
     clearMeetBackground();
     reportActive(false);
@@ -68,10 +70,16 @@ function render() {
 let camera = false; // camera.js last reported a live camera track
 let cameraOffAt = 0;
 let cameraWanted = false; // camera on (or off for under 2 s), option enabled and inside a meeting
+let media = false; // Teams only: camera.js last reported a live microphone or camera track
+let mediaOffAt = -Infinity;
+
+// The same 2 s grace for "media": switching devices restarts the tracks without ending the call, and the camera's own
+// grace would otherwise be cut short by the meeting ending at once.
+const inMeeting = () => isMeeting(location, media || Date.now() - mediaOffAt < 2000);
 
 function followCamera() {
   // 2 s grace: Meet restarting the track is neither a stop nor a new start (which would relight a light turned off by hand).
-  const wanted = settings.auto && isMeeting(location) && (camera || (cameraWanted && Date.now() - cameraOffAt < 2000));
+  const wanted = settings.auto && inMeeting() && (camera || (cameraWanted && Date.now() - cameraOffAt < 2000));
   if (wanted === cameraWanted) return;
   cameraWanted = wanted;
   browser.runtime.sendMessage({ camera: wanted }).catch(() => {}); // e.g. extension updated: this script is orphaned
@@ -80,9 +88,12 @@ function followCamera() {
 // Messages come from the page's world, so anything on the page can send them: check the shape, trust only booleans.
 addEventListener("message", (e) => {
   const r = e.data && e.data.ringLight;
-  if (e.origin !== location.origin || !r || typeof r.camera !== "boolean") return;
+  if (e.origin !== location.origin || !r || typeof r.camera !== "boolean" || typeof (r.media ?? false) !== "boolean") return;
   if (camera && !r.camera) cameraOffAt = Date.now();
   camera = r.camera;
+  if (media && !r.media) mediaOffAt = Date.now();
+  media = !!r.media;
+  if (inMeeting() !== meeting) render();
   followCamera();
 });
 
@@ -109,11 +120,12 @@ function load() {
 load();
 browser.storage.onChanged.addListener(load);
 // shortcut: polls the URL because Meet navigates without reloading; switch to the Navigation API once Firefox ships it everywhere.
+// Also ends a Teams call once its media grace runs out.
 setInterval(() => {
-  if (location.pathname !== path) {
+  if (location.pathname !== path || inMeeting() !== meeting) {
     path = location.pathname;
     render();
-  } else if (settings.on && isMeeting(location) && paintsBackground()) {
+  } else if (settings.on && meeting && paintsBackground()) {
     paintMeetBackground(lightColor(settings.warmth, settings.intensity)); // Meet re-renders its layout often
   }
   followCamera();
