@@ -13,9 +13,24 @@ function lightColor(warmth, intensity) {
   return `rgb(${rgb.join(", ")})`;
 }
 
-// Meeting rooms (and their waiting room) live at /abc-defg-hij.
+// Supported video call apps, by hostname. Adding one: an entry here, its host permission and content script matches
+// in manifest.json, and tests (see CONTRIBUTING.md). meeting: the paths of a call, not the app's home page;
+// meetBg: whether "Light up Meet's background" applies (it looks for Meet's own dark areas).
+const PLATFORMS = {
+  // Meeting rooms (and their waiting room) live at /abc-defg-hij.
+  "meet.google.com": { meeting: /^\/[a-z]{3}-[a-z]{4}-[a-z]{3}\/?$/, meetBg: true },
+  // Any single name is a room (and its prejoin screen), dots included; files the site serves at the top are not.
+  "meet.jit.si": { meeting: /^\/(?!(?:http-bind|xmpp-websocket)$)(?![^/]+\.(?:css|html|ico|js|json|txt)$)[^/]+$/, meetBg: false },
+};
+
 function isMeetingPath(path) {
-  return /^\/[a-z]{3}-[a-z]{4}-[a-z]{3}\/?$/.test(path);
+  return PLATFORMS["meet.google.com"].meeting.test(path);
+}
+
+// loc: window.location, or anything with hostname and pathname.
+function isMeeting(loc) {
+  const platform = PLATFORMS[loc.hostname];
+  return !!platform && platform.meeting.test(loc.pathname);
 }
 
 // Opaque and dark, like Meet's call background. Translucent overlays are left alone.
@@ -34,4 +49,4 @@ function valueFromX(x, rect, min, max, step, thumb = 16) {
   return Math.min(max, Math.max(min, snapped));
 }
 
-if (typeof module !== "undefined") module.exports = { DEFAULTS, lightColor, isMeetingPath, isDark, valueFromX };
+if (typeof module !== "undefined") module.exports = { DEFAULTS, PLATFORMS, lightColor, isMeetingPath, isMeeting, isDark, valueFromX };

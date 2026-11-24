@@ -48,6 +48,7 @@ Features
 • Keyboard shortcut: Alt+Shift+L
 • Light and dark themes, accessible panel
 • 12 languages
+• Also works on Jitsi Meet (meet.jit.si)
 
 Privacy: no data collected, no network requests. Settings stay in your browser.
 
@@ -83,6 +84,7 @@ Funciones
 • Atajo de teclado: Alt+Mayús+L
 • Tema claro y oscuro, panel accesible
 • 12 idiomas
+• También funciona en Jitsi Meet (meet.jit.si)
 
 Privacidad: no recoge datos ni hace peticiones de red. Los ajustes se quedan en tu navegador.
 
@@ -118,6 +120,7 @@ Funcions
 • Drecera de teclat: Alt+Maj+L
 • Tema clar i fosc, panell accessible
 • 12 idiomes
+• També funciona a Jitsi Meet (meet.jit.si)
 
 Privadesa: no recull dades ni fa peticions de xarxa. La configuració es queda al teu navegador.
 
@@ -153,6 +156,7 @@ Funcións
 • Atallo de teclado: Alt+Maiús+L
 • Tema claro e escuro, panel accesible
 • 12 idiomas
+• Tamén funciona en Jitsi Meet (meet.jit.si)
 
 Privacidade: non recolle datos nin fai peticións de rede. Os axustes quedan no teu navegador.
 
@@ -188,6 +192,7 @@ Ezaugarriak
 • Teklatuko lasterbidea: Alt+Maius+L
 • Gai argia eta iluna, panel irisgarria
 • 12 hizkuntza
+• Jitsi Meet-en ere badabil (meet.jit.si)
 
 Pribatutasuna: ez du daturik biltzen eta ez du sare-eskaerarik egiten. Ezarpenak zure nabigatzailean geratzen dira.
 
@@ -223,6 +228,7 @@ Fonctionnalités
 • Raccourci clavier : Alt+Maj+L
 • Thèmes clair et sombre, panneau accessible
 • 12 langues
+• Fonctionne aussi sur Jitsi Meet (meet.jit.si)
 
 Confidentialité : aucune donnée collectée, aucune requête réseau. Vos réglages restent dans votre navigateur.
 
@@ -258,6 +264,7 @@ Funktionen
 • Tastenkürzel: Alt+Umschalt+L
 • Helles und dunkles Design, barrierearmes Bedienfeld
 • 12 Sprachen
+• Funktioniert auch mit Jitsi Meet (meet.jit.si)
 
 Datenschutz: keine Datenerfassung, keine Netzwerkanfragen. Deine Einstellungen bleiben in deinem Browser.
 
@@ -293,6 +300,7 @@ Funzionalità
 • Scorciatoia da tastiera: Alt+Maiusc+L
 • Tema chiaro e scuro, pannello accessibile
 • 12 lingue
+• Funziona anche su Jitsi Meet (meet.jit.si)
 
 Privacy: nessun dato raccolto, nessuna richiesta di rete. Le impostazioni restano nel tuo browser.
 
@@ -328,6 +336,7 @@ Recursos
 • Atalho de teclado: Alt+Shift+L
 • Tema claro e escuro, painel acessível
 • 12 idiomas
+• Também funciona no Jitsi Meet (meet.jit.si)
 
 Privacidade: nenhum dado coletado, nenhuma requisição de rede. Suas configurações ficam no seu navegador.
 
@@ -363,6 +372,7 @@ Funcionalidades
 • Atalho de teclado: Alt+Shift+L
 • Tema claro e escuro, painel acessível
 • 12 idiomas
+• Também funciona no Jitsi Meet (meet.jit.si)
 
 Privacidade: nenhum dado recolhido, nenhum pedido de rede. As suas definições ficam no seu navegador.
 
@@ -398,6 +408,7 @@ Google Meet の通話中、画面をリングライトに変えます。やわ�
 • キーボードショートカット：Alt+Shift+L
 • ライト／ダークテーマ、アクセシブルなパネル
 • 12 言語に対応
+• Jitsi Meet（meet.jit.si）でも使えます
 
 プライバシー：データは一切収集せず、ネットワーク通信も行いません。設定はブラウザ内にのみ保存されます。
 
@@ -433,6 +444,7 @@ Google Meet の通話中、画面をリングライトに変えます。やわ�
 • 鍵盤快速鍵：Alt+Shift+L
 • 淺色與深色主題、無障礙面板
 • 支援 12 種語言
+• 也適用於 Jitsi Meet（meet.jit.si）
 
 隱私：不收集任何資料，也不發出任何網路請求。設定只會保存在你的瀏覽器中。
 

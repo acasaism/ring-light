@@ -1,6 +1,6 @@
-// Runs in Meet's own JavaScript world ("world": "MAIN"), before Meet's scripts, so it sees the tracks
-// Meet gets from getUserMedia. It only checks whether a camera track is live, never its image or sound,
-// and tells content.js (which has the extension API) through a window message. Also runs in Meet's own frames,
+// Runs in the call page's own JavaScript world ("world": "MAIN"), before its scripts, so it sees the tracks
+// the page gets from getUserMedia. It only checks whether a camera track is live, never its image or sound,
+// and tells content.js (which has the extension API) through a window message. Also runs in the page's own frames,
 // in case one of them opens the camera; content.js runs only in the top page, hence `top`.
 (() => {
   const tracks = new Set(); // camera tracks: from getUserMedia, and copies of them

@@ -18,19 +18,19 @@ Thanks for helping. Bug reports, ideas and pull requests are all welcome.
 ## Load the extension
 
 - **Firefox:** `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → pick `manifest.json`. Click **Reload** after each change.
-- **Chromium:** `chrome://extensions` → **Developer mode** → **Load unpacked** → pick the repository folder. Click the reload arrow after each change, then reload the Meet tab.
+- **Chromium:** `chrome://extensions` → **Developer mode** → **Load unpacked** → pick the repository folder. Click the reload arrow after each change, then reload the call tab.
 
-To test without other people, open `https://meet.google.com/new` to start a meeting of your own.
+To test without other people, open `https://meet.google.com/new` to start a meeting of your own, or any `https://meet.jit.si/SomeRoomName` (the screen before joining is enough).
 
 ## Project layout
 
 | File | Role |
 |------|------|
 | `manifest.json` | One manifest for both browsers: `background.scripts` for Firefox, `background.service_worker` for Chromium |
-| `light.js` | Shared helpers and defaults, loaded first everywhere. Aliases `chrome` to `browser` on Chromium |
-| `content.js` | Runs on Meet: draws the frame, lights Meet's background and tells `background.js` when the camera starts or stops |
-| `camera.js` | Runs on Meet in the page's own world (`world: "MAIN"`, at `document_start`, in every Meet frame): watches the camera tracks from `getUserMedia` and tells `content.js` whether the camera is on. No extension API there |
-| `background.js` | Keyboard shortcut, per-tab toolbar icon, and turning the light on and off with the camera for all Meet tabs |
+| `light.js` | Shared helpers and defaults, loaded first everywhere, including the table of supported video call apps (`PLATFORMS`). Aliases `chrome` to `browser` on Chromium |
+| `content.js` | Runs on the call pages (Meet, Jitsi Meet): draws the frame, lights Meet's background and tells `background.js` when the camera starts or stops |
+| `camera.js` | Runs on the call pages in the page's own world (`world: "MAIN"`, at `document_start`, in every frame): watches the camera tracks from `getUserMedia` and tells `content.js` whether the camera is on. No extension API there |
+| `background.js` | Keyboard shortcut, per-tab toolbar icon, and turning the light on and off with the camera for all call tabs |
 | `popup.html`, `popup.js` | The settings panel |
 | `light.html`, `light-window.js` | The movable light window |
 | `_locales/` | Translations (English and Spanish) |
@@ -51,6 +51,20 @@ A test should check what the user sees or what gets saved, through the same entr
 - **Accessibility.** Keep text contrast at 4.5:1 or more and control outlines at 3:1, give every control a label, and keep everything usable with the keyboard.
 - **Commits.** Use [Conventional Commits](https://www.conventionalcommits.org/), for example `feat(popup): add a preset` or `fix: keep the frame after leaving full screen`.
 - **Scope.** One change per pull request. Discuss large features in an issue first.
+
+## Add a video call app
+
+Each app is one entry in `PLATFORMS` in `light.js`, keyed by hostname:
+
+- `meeting`: a regular expression for the paths of a call (and the screen before joining), never the app's home page or the files it serves.
+- `meetBg`: `true` only if **Light up Meet's background** works there. It looks for Meet's dark areas, so new apps start with `false`.
+
+Then:
+
+1. In `manifest.json`, add `https://<hostname>/*` to `host_permissions` and to the `matches` of both content scripts (`content.js` and `camera.js`). The tests check that the manifest and the table agree. `background.js` reads the table to ask every call tab about its camera.
+2. In `test.js`, add `isMeeting` cases: a call, the home page and other pages of the app that are not calls.
+3. Check it on the real site: the frame appears in a call and not on the home page.
+4. Add the app to `README.md` (intro, quick start, known limitations) and its permission to `PRIVACY.md`.
 
 ## Translations
 

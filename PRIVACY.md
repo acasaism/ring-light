@@ -17,7 +17,7 @@ Removing the extension deletes all of it.
 
 ## The camera
 
-On every Meet page, a small script notes whether the call's camera is on. It only looks at whether a camera track is live; it never sees the image or hears the sound. It passes that yes or no to the rest of the extension as a message inside the page, which Meet's own scripts can also see. The extension only acts on it when **Turn on with the camera** is on, and then stores only whether a camera is on. No data leaves your browser.
+On every Meet and Jitsi Meet page, a small script notes whether the call's camera is on. It only looks at whether a camera track is live; it never sees the image or hears the sound. It passes that yes or no to the rest of the extension as a message inside the page, which the page's own scripts can also see. The extension only acts on it when **Turn on with the camera** is on, and then stores only whether a camera is on. No data leaves your browser.
 
 ## Permissions
 
@@ -25,6 +25,7 @@ On every Meet page, a small script notes whether the call's camera is on. It onl
 |------------|------------------|
 | `storage` | To save the settings listed above |
 | Access to `https://meet.google.com/*` | To draw the light frame around the call and, if you turn on **Turn on with the camera**, to know whether the camera is on. The extension does not read your meetings, chats or participants |
+| Access to `https://meet.jit.si/*` | The same on Jitsi Meet |
 
 ## Contact
 

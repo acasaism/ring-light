@@ -1,7 +1,7 @@
 // Run: node test.js
 const assert = require("node:assert");
 const fs = require("node:fs");
-const { DEFAULTS, lightColor, isMeetingPath, isDark, valueFromX } = require("./light.js");
+const { DEFAULTS, PLATFORMS, lightColor, isMeetingPath, isMeeting, isDark, valueFromX } = require("./light.js");
 
 // 216px track with a 16px thumb: usable range is x = 8..208
 const track = { left: 0, width: 216 };
@@ -60,7 +60,12 @@ assert.ok(cameraScript, "camera.js is a content script");
 assert.deepStrictEqual(cameraScript.js, ["camera.js"], "camera.js in its own entry (the main world has no extension API)");
 assert.strictEqual(cameraScript.world, "MAIN", "camera.js runs in the page's main world");
 assert.strictEqual(cameraScript.run_at, "document_start", "camera.js runs before the page's scripts");
-assert.deepStrictEqual(cameraScript.matches, ["https://meet.google.com/*"], "camera.js only on Meet");
+// Every video call app in the platform table gets its host permission and both content scripts, and nothing else does
+const platformHosts = Object.keys(PLATFORMS).map((h) => `https://${h}/*`);
+assert.ok(platformHosts.includes("https://meet.jit.si/*"), "Jitsi Meet is a supported platform");
+assert.deepStrictEqual(manifest.host_permissions, platformHosts, "host permission for every platform");
+assert.deepStrictEqual(manifest.content_scripts.find((c) => c.js.includes("content.js")).matches, platformHosts, "content.js on every platform");
+assert.deepStrictEqual(cameraScript.matches, platformHosts, "camera.js on every platform");
 assert.strictEqual(cameraScript.all_frames, true, "camera.js also in Meet's own frames, which may open the camera");
 assert.deepStrictEqual(manifest.permissions, ["storage"], "no new permissions");
 // The store zip lists its files one by one: every script the manifest loads must be in it
@@ -74,6 +79,24 @@ assert.ok(isMeetingPath("/abc-defg-hij/"), "meeting code with trailing slash");
 assert.ok(!isMeetingPath("/"), "landing page");
 assert.ok(!isMeetingPath("/landing"), "other Meet page");
 assert.ok(!isMeetingPath("/abc-defg-hijk"), "not a meeting code");
+
+// isMeeting: the platform table, by hostname. Meet keeps its rule.
+const at = (hostname) => (pathname) => ({ hostname, pathname });
+const meetAt = at("meet.google.com"), jitsiAt = at("meet.jit.si");
+assert.ok(isMeeting(meetAt("/abc-defg-hij")), "Meet meeting");
+assert.ok(isMeeting(meetAt("/abc-defg-hij/")), "Meet meeting with trailing slash");
+assert.ok(!isMeeting(meetAt("/")) && !isMeeting(meetAt("/landing")), "Meet home and other pages");
+assert.ok(isMeeting(jitsiAt("/MyTeamStandup")), "Jitsi room");
+// meet.jit.si (2026-11) serves its app for any single name, dots included; a trailing slash is a 404
+assert.ok(isMeeting(jitsiAt("/team.sync-2026")), "Jitsi room with a dot");
+assert.ok(isMeeting(jitsiAt("/static")), "Jitsi room named like a folder (meet.jit.si opens it as a room)");
+assert.ok(!isMeeting(jitsiAt("/")), "Jitsi home page");
+for (const p of ["/MyTeamStandup/", "/static/close.html", "/static/close3.html", "/libs/app.bundle.min.js", "/sounds/ring.mp3",
+  "/images/", "/config.js", "/interface_config.js", "/robots.txt", "/favicon.ico", "/manifest.json", "/title.html",
+  "/http-bind", "/xmpp-websocket"])
+  assert.ok(!isMeeting(jitsiAt(p)), `not a Jitsi room: ${p}`);
+assert.ok(!isMeeting(meetAt("/MyTeamStandup")), "Jitsi rooms are not Meet meetings");
+assert.ok(!isMeeting(at("example.com")("/abc-defg-hij")), "unknown site");
 
 assert.strictEqual(lightColor(0, 100), "rgb(255, 255, 255)", "neutral max is pure white");
 assert.strictEqual(lightColor(100, 100), "rgb(255, 214, 170)", "full warm");
@@ -166,8 +189,9 @@ global.document = {
 };
 global.DEFAULTS = DEFAULTS;
 global.lightColor = lightColor;
-global.isMeetingPath = isMeetingPath;
-global.location = { pathname: "/abc-defg-hij", origin: "https://meet.google.com" };
+global.PLATFORMS = PLATFORMS;
+global.isMeeting = isMeeting;
+global.location = { hostname: "meet.google.com", pathname: "/abc-defg-hij", origin: "https://meet.google.com" };
 global.addEventListener = () => {}; // camera messages and pagehide: tested below, across tabs
 let poll;
 const sent = [];
@@ -241,6 +265,28 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(body.style.transform + body.style.clipPath + html.style.background, "", "off restores page");
   assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "switch off: icon off");
 
+  // Jitsi Meet: the same frame; "Light up Meet's background" is tuned for Meet, so Jitsi's own background stays as it is
+  Object.assign(location, { hostname: "meet.jit.si", pathname: "/MyTeamStandup", origin: "https://meet.jit.si" });
+  stored = { ...stored, on: true, frame: true, meetBg: true, warmth: 0 };
+  listener(); await tick();
+  assert.strictEqual(body.style.transform, "scale(0.8)", "frame in a Jitsi room");
+  assert.strictEqual(html.style.background, "rgb(255, 255, 255)", "light around a Jitsi room");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: true }, "Jitsi room: icon on");
+  poll();
+  assert.strictEqual(stage.style.backgroundColor, "", "no background painting on Jitsi, even with the option on");
+  stored = { ...stored, frame: false };
+  listener(); await tick();
+  assert.strictEqual(stage.style.backgroundColor, "", "nor without the frame");
+  stored = { ...stored, frame: true };
+  listener(); await tick();
+  location.pathname = "/";
+  poll();
+  assert.strictEqual(body.style.transform, "", "no light on the Jitsi home page");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "Jitsi home page: icon off");
+  Object.assign(location, { hostname: "meet.google.com", pathname: "/abc-defg-hij", origin: "https://meet.google.com" });
+  stored = { ...stored, on: false, meetBg: false };
+  listener(); await tick();
+
   // "Turn on with the camera" across the extension: Meet tabs (light.js + content.js, each in its own page),
   // background.js and one shared storage, wired like the browser
   function extension() {
@@ -275,9 +321,11 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
         },
         storage: { local, onChanged },
         tabs: {
+          // like the browser: only tabs whose page matches one of the patterns
           query: async (q) => {
-            assert.strictEqual(JSON.stringify(q), JSON.stringify({ url: "https://meet.google.com/*" }), "asks only Meet tabs (host permission, no tabs permission)");
-            return [...tabs.keys()].map((id) => ({ id }));
+            const urls = [].concat(q.url);
+            assert.ok(urls.every((u) => manifest.host_permissions.includes(u)), "asks only tabs it has host permission for (no tabs permission)");
+            return [...tabs.values()].filter((t) => urls.includes(`https://${t.location.hostname}/*`)).map((t) => ({ id: t.id }));
           },
           // a tab without a listener (crashed, or loaded before the extension) cannot answer
           sendMessage: (id, msg) => new Promise((resolve, reject) => {
@@ -299,8 +347,8 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
       shortcut: () => onCommand("toggle-light"),
       fire: async (event) => { for (const fn of lifecycle[event]) fn({}); await tick(); },
       wait: async (ms) => { clock += ms; for (const t of tabs.values()) t.poll(); await tick(); },
-      tab(id) {
-        const t = { id, events: {}, body: { style: {} }, location: { pathname: "/abc-defg-hij", origin: "https://meet.google.com" } };
+      tab(id, hostname = "meet.google.com", pathname = "/abc-defg-hij") {
+        const t = { id, events: {}, body: { style: {} }, location: { hostname, pathname, origin: `https://${hostname}` } };
         const gone = () => Promise.reject(new Error("Extension context invalidated."));
         const ctx = vm.createContext({
           document: { documentElement: { style: {} }, body: t.body, querySelectorAll: () => [] },
@@ -323,7 +371,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
         run(ctx, "light.js");
         run(ctx, "content.js");
         tabs.set(id, t);
-        t.camera = (on) => t.events.message({ origin: "https://meet.google.com", data: { ringLight: { camera: on } } });
+        t.camera = (on) => t.events.message({ origin: t.location.origin, data: { ringLight: { camera: on } } });
         // the extension was updated or reloaded: this old content script can no longer reach it
         t.orphan = () => { t.orphaned = true; t.onMessage = null; };
         t.close = async () => {
@@ -535,6 +583,27 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
       assert.strictEqual(ext.storage.on, true, `${event}: a lost camera does not turn off a light switched on by hand`);
       await ext.user({ on: false });
     }
+  }
+
+  // Jitsi Meet tabs follow the camera too, and count alongside Meet tabs
+  {
+    const ext = extension();
+    const home = ext.tab(1, "meet.jit.si", "/");
+    await ext.user({ auto: true });
+    home.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, false, "camera on the Jitsi home page: light stays off");
+    home.camera(false); await tick();
+    const jitsi = ext.tab(2, "meet.jit.si", "/MyTeamStandup"), meet = ext.tab(3);
+    jitsi.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts in a Jitsi room (or its prejoin screen): light on");
+    assert.strictEqual(jitsi.body.style.transform, "scale(0.85)", "frame in the Jitsi room");
+    meet.camera(true); await tick();
+    meet.camera(false); await tick();
+    await ext.wait(3000);
+    assert.strictEqual(ext.storage.on, true, "Meet's camera stops while Jitsi's is on: light stays on");
+    jitsi.camera(false); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "Jitsi's camera stops: light off");
   }
 
   // camera.js runs in Meet's own world: it wraps getUserMedia and track and stream clones, and polls the camera tracks
