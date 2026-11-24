@@ -29,7 +29,7 @@ To test without other people, open `https://meet.google.com/new` to start a meet
 | `manifest.json` | One manifest for both browsers: `background.scripts` for Firefox, `background.service_worker` for Chromium |
 | `light.js` | Shared helpers and defaults, loaded first everywhere, including the table of supported video call apps (`PLATFORMS`). Aliases `chrome` to `browser` on Chromium |
 | `content.js` | Runs on the call pages (the sites in `PLATFORMS`): draws the frame, lights Meet's background and tells `background.js` when the camera starts or stops |
-| `camera.js` | Runs on the call pages in the page's own world (`world: "MAIN"`, at `document_start`, in every frame): watches the camera tracks from `getUserMedia` and tells `content.js` whether the camera is on (on Teams, also whether any microphone or camera track is live). No extension API there |
+| `camera.js` | Runs on the call pages in the page's own world (`world: "MAIN"`, at `document_start`, in every frame): watches the camera tracks from `getUserMedia` and tells `content.js` whether the camera is on (on Teams, also whether a call connection, an `RTCPeerConnection`, is connected). No extension API there |
 | `background.js` | Keyboard shortcut, per-tab toolbar icon, and turning the light on and off with the camera for all call tabs |
 | `popup.html`, `popup.js` | The settings panel |
 | `light.html`, `light-window.js` | The movable light window |
@@ -57,7 +57,7 @@ A test should check what the user sees or what gets saved, through the same entr
 Each app is one entry in `PLATFORMS` in `light.js`, keyed by hostname:
 
 - `meeting`: a regular expression for the paths of a call (and the screen before joining), never the app's home page or the files it serves. An app served at several hostnames (Zoom: `app.zoom.us` and `zoom.us`) gets one entry per hostname; they can share the same object.
-- Or `meeting: "media"`, for apps whose address does not tell a call apart (Microsoft Teams): the page is in a call while it holds a live microphone or camera track, and for 2 seconds after the last one stops, so a device switch does not end it. Add the hostname to the list at the top of `camera.js` too, which then reports `media` there (only there: elsewhere it watches the camera alone); the tests check that both lists agree.
+- Or `meeting: "call"`, for apps whose address does not tell a call apart (Microsoft Teams): the page is in a call while one of its `RTCPeerConnection`s is connected, and for 2 seconds after, so a reconnection does not end it. A live microphone or camera does not count (voice messages, device tests in settings), and a call may have neither. Add the hostname to the list at the top of `camera.js` too, which then watches the page's `RTCPeerConnection`s and reports `call` there (only there: elsewhere it watches the camera alone and leaves `RTCPeerConnection` untouched); the tests check that both lists agree. `camera.js` repeats its report every second, and `content.js` takes more than 2.5 seconds of silence as a no (the frame was removed or frozen before saying so).
 - `meetBg`: `true` only if **Light up Meet's background** works there. It looks for Meet's dark areas, so new apps start with `false`; there, that option draws the frame when **Frame** is off.
 
 Then:
