@@ -21,7 +21,7 @@ The call shrinks slightly and a frame of light fills the edges of the screen. No
 | **Temperature** | From cool (bluish) to warm (amber) light. |
 | **Intensity** | From dim to full brightness. |
 | **Frame** and **Thickness** | The ring of light around the call, and how wide it is. |
-| **Light up Meet's background** | Google Meet only. Turns Meet's dark call background into light too, for more brightness without a frame. |
+| **Light up Meet's background** | Google Meet only. Turns Meet's dark call background into light too, for more brightness without a frame. On other apps, with **Frame** off, the frame is drawn instead, so the light still shows. |
 | **Open light window** | Opens a window filled with light that you can move to a second screen. Double-click for full screen. |
 | **Save as default** / **Reset** | Save your favourite settings and go back to them after experimenting. Saving and resetting can be undone. |
 
@@ -59,7 +59,7 @@ The call in these screenshots is a mock-up; the light effect and the panel are t
 
 - On Meet's "You left the meeting" screen the light stays on, because Meet keeps the same address.
 - **Light up Meet's background** finds Meet's dark areas by colour and size, so it may stop working if Google redesigns Meet. It can also light the tiles of participants with their camera off.
-- **Light up Meet's background** does nothing on Jitsi Meet: Jitsi keeps its own background, and the frame still lights you.
+- **Light up Meet's background** does not change Jitsi Meet's background. With **Frame** off, the frame is drawn instead, so the light still shows.
 - Jitsi Meet works on `meet.jit.si` only, not on self-hosted Jitsi servers, and only for rooms at `meet.jit.si/RoomName`.
 - **Turn on with the camera** needs the call tab to be loaded after the extension: reload call tabs that were open when you installed or updated it.
 - The settings panel closes when the light window opens. Browsers close extension panels when they lose focus; open the panel again to keep adjusting.

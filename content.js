@@ -48,7 +48,8 @@ function render() {
   }
   reportActive(true);
   const color = lightColor(s.warmth, s.intensity);
-  if (s.frame) {
+  // Where the background option cannot apply (not Meet), it falls back to the frame, so the light is never invisible.
+  if (s.frame || (s.meetBg && !PLATFORMS[location.hostname].meetBg)) {
     const scale = 1 - s.size / 100;
     html.background = color;
     body.transformOrigin = "center";

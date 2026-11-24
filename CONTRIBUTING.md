@@ -57,7 +57,7 @@ A test should check what the user sees or what gets saved, through the same entr
 Each app is one entry in `PLATFORMS` in `light.js`, keyed by hostname:
 
 - `meeting`: a regular expression for the paths of a call (and the screen before joining), never the app's home page or the files it serves.
-- `meetBg`: `true` only if **Light up Meet's background** works there. It looks for Meet's dark areas, so new apps start with `false`.
+- `meetBg`: `true` only if **Light up Meet's background** works there. It looks for Meet's dark areas, so new apps start with `false`; there, that option draws the frame when **Frame** is off.
 
 Then:
 
@@ -65,6 +65,8 @@ Then:
 2. In `test.js`, add `isMeeting` cases: a call, the home page and other pages of the app that are not calls.
 3. Check it on the real site: the frame appears in a call and not on the home page.
 4. Add the app to `README.md` (intro, quick start, known limitations) and its permission to `PRIVACY.md`.
+
+Each new host in `host_permissions` makes people who already have the extension approve it again on update: Chrome disables the updated extension until they accept, and Firefox may install the update without granting the new site. Ship new apps together in one release, so this happens once.
 
 ## Translations
 

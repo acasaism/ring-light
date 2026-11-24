@@ -18,7 +18,8 @@
     for (const t of tracks) if (t.readyState !== "live") tracks.delete(t);
     const camera = [...tracks].some((t) => t.enabled && !t.muted); // actually sending frames
     // Repeated while camera tracks exist: content.js starts later (document_idle) and may have missed the change.
-    if (camera !== last || tracks.size) top.postMessage({ ringLight: { camera } }, "*");
+    // Only to a same-origin top page: when another site embeds the call, `top` is that site and must not hear it.
+    if (camera !== last || tracks.size) top.postMessage({ ringLight: { camera } }, location.origin);
     last = camera;
     if (!tracks.size) {
       clearInterval(timer);
