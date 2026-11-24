@@ -1,7 +1,7 @@
 // Run: node test.js
 const assert = require("node:assert");
 const fs = require("node:fs");
-const { DEFAULTS, PLATFORMS, lightColor, isMeetingPath, isMeeting, isDark, valueFromX } = require("./light.js");
+const { DEFAULTS, PLATFORMS, lightColor, isMeeting, isDark, valueFromX } = require("./light.js");
 
 // 216px track with a 16px thumb: usable range is x = 8..208
 const track = { left: 0, width: 216 };
@@ -74,26 +74,24 @@ for (const f of manifest.content_scripts.flatMap((c) => c.js)) assert.ok(zipped.
 for (const p of [...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon)])
   assert.ok(p.endsWith(".png") && fs.existsSync(__dirname + "/" + p), `PNG icon exists: ${p}`);
 
-assert.ok(isMeetingPath("/abc-defg-hij"), "meeting code");
-assert.ok(isMeetingPath("/abc-defg-hij/"), "meeting code with trailing slash");
-assert.ok(!isMeetingPath("/"), "landing page");
-assert.ok(!isMeetingPath("/landing"), "other Meet page");
-assert.ok(!isMeetingPath("/abc-defg-hijk"), "not a meeting code");
-
 // isMeeting: the platform table, by hostname. Meet keeps its rule.
 const at = (hostname) => (pathname) => ({ hostname, pathname });
 const meetAt = at("meet.google.com"), jitsiAt = at("meet.jit.si");
 assert.ok(isMeeting(meetAt("/abc-defg-hij")), "Meet meeting");
 assert.ok(isMeeting(meetAt("/abc-defg-hij/")), "Meet meeting with trailing slash");
-assert.ok(!isMeeting(meetAt("/")) && !isMeeting(meetAt("/landing")), "Meet home and other pages");
+assert.ok(!isMeeting(meetAt("/")), "Meet landing page");
+assert.ok(!isMeeting(meetAt("/landing")), "other Meet page");
+assert.ok(!isMeeting(meetAt("/abc-defg-hijk")), "not a Meet meeting code");
 assert.ok(isMeeting(jitsiAt("/MyTeamStandup")), "Jitsi room");
 // meet.jit.si (2026-11) serves its app for any single name, dots included; a trailing slash is a 404
 assert.ok(isMeeting(jitsiAt("/team.sync-2026")), "Jitsi room with a dot");
+assert.ok(isMeeting(jitsiAt("/release.notes")) && isMeeting(jitsiAt("/v2.0")), "Jitsi rooms with dots that are not file types");
 assert.ok(isMeeting(jitsiAt("/static")), "Jitsi room named like a folder (meet.jit.si opens it as a room)");
 assert.ok(!isMeeting(jitsiAt("/")), "Jitsi home page");
 for (const p of ["/MyTeamStandup/", "/static/close.html", "/static/close3.html", "/libs/app.bundle.min.js", "/sounds/ring.mp3",
   "/images/", "/config.js", "/interface_config.js", "/robots.txt", "/favicon.ico", "/manifest.json", "/title.html",
-  "/http-bind", "/xmpp-websocket"])
+  "/http-bind", "/xmpp-websocket", "/apple-touch-icon.png", "/favicon.svg", "/sitemap.xml", "/manifest.webmanifest",
+  "/libs/lib-jitsi-meet.wasm", "/app.wasm", "/logo.JPG", "/bg.webp", "/fonts.woff2", "/app.js.map", "/ring.mp3"])
   assert.ok(!isMeeting(jitsiAt(p)), `not a Jitsi room: ${p}`);
 assert.ok(!isMeeting(meetAt("/MyTeamStandup")), "Jitsi rooms are not Meet meetings");
 assert.ok(!isMeeting(at("example.com")("/abc-defg-hij")), "unknown site");
@@ -247,7 +245,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   // frame off: Meet full screen, light only from its background
   stored = { ...stored, frame: false };
   listener(); await tick();
-  assert.strictEqual(body.style.transform + body.style.clipPath + html.style.background, "", "frame off leaves no frame");
+  assert.strictEqual(body.style.transform + body.style.clipPath + html.style.background, "", "Meet: frame off leaves no frame (no fallback)");
   assert.strictEqual(stage.style.backgroundColor, "rgb(255, 214, 170)", "background still lit without frame");
   stored = { ...stored, frame: true };
 
@@ -274,10 +272,18 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.deepStrictEqual(sent.at(-1), { lightActive: true }, "Jitsi room: icon on");
   poll();
   assert.strictEqual(stage.style.backgroundColor, "", "no background painting on Jitsi, even with the option on");
+  // Frame off with the background option on: Jitsi has no background to light, so the frame is drawn instead
   stored = { ...stored, frame: false };
   listener(); await tick();
-  assert.strictEqual(stage.style.backgroundColor, "", "nor without the frame");
-  stored = { ...stored, frame: true };
+  assert.strictEqual(body.style.transform, "scale(0.8)", "Jitsi, frame off + background on: frame drawn as fallback");
+  assert.strictEqual(html.style.background, "rgb(255, 255, 255)", "fallback frame is lit");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: true }, "fallback: icon on, and the light is visible");
+  poll();
+  assert.strictEqual(stage.style.backgroundColor, "", "still no background painting on Jitsi");
+  stored = { ...stored, meetBg: false };
+  listener(); await tick();
+  assert.strictEqual(body.style.transform + body.style.clipPath + html.style.background, "", "Jitsi, frame and background off: no frame");
+  stored = { ...stored, frame: true, meetBg: true };
   listener(); await tick();
   location.pathname = "/";
   poll();
@@ -632,9 +638,16 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     MediaStream: FakeStream,
     setInterval: (fn, ms) => { assert.strictEqual(ms, 1000, "polls every second"); cameraTick = fn; return 1; },
     clearInterval: (id) => { assert.strictEqual(id, 1, "stops its own timer"); cameraTick = null; },
+    // only a same-origin top page may hear it: on a site embedding meet.jit.si, `top` is that site
+    location: { origin: "https://meet.jit.si" },
     top: { postMessage: (m, target) => posted.push({ ...m.ringLight, target }) },
   }));
-  const report = () => { posted.length = 0; cameraTick?.(); return posted[0]; };
+  const report = () => {
+    posted.length = 0;
+    cameraTick?.();
+    for (const m of posted) assert.strictEqual(m.target, "https://meet.jit.si", "posted to the frame's own origin, never \"*\"");
+    return posted[0];
+  };
   assert.strictEqual(cameraTick, null, "no timer before the page uses the camera");
   const devices = new FakeMediaDevices();
   const mic = await devices.getUserMedia({ audio: true });
@@ -643,11 +656,11 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   const stream = await devices.getUserMedia({ video: true, audio: true });
   const [video, audio] = stream.getTracks();
   assert.strictEqual(video.kind, "video", "the page still gets its stream");
-  assert.deepStrictEqual(report(), { camera: true, target: "*" }, "camera on reported, nothing else");
-  assert.deepStrictEqual(report(), { camera: true, target: "*" }, "repeated every second while a camera track exists");
+  assert.deepStrictEqual(report(), { camera: true, target: "https://meet.jit.si" }, "camera on reported, nothing else");
+  assert.deepStrictEqual(report(), { camera: true, target: "https://meet.jit.si" }, "repeated every second while a camera track exists");
   // Meet may turn the camera off by disabling the track...
   video.enabled = false;
-  assert.deepStrictEqual(report(), { camera: false, target: "*" }, "disabled camera track: camera off");
+  assert.deepStrictEqual(report(), { camera: false, target: "https://meet.jit.si" }, "disabled camera track: camera off");
   video.enabled = true;
   assert.strictEqual(report().camera, true, "enabled again: camera on");
   video.muted = true;
@@ -661,7 +674,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   copy.stop();
   assert.strictEqual(report().camera, true, "a live copy made by cloning the camera's stream keeps the camera on");
   for (const t of effects.getTracks()) t.stop();
-  assert.deepStrictEqual(report(), { camera: false, target: "*" }, "every camera track stopped: camera off, reported once");
+  assert.deepStrictEqual(report(), { camera: false, target: "https://meet.jit.si" }, "every camera track stopped: camera off, reported once");
   assert.strictEqual(cameraTick, null, "then the timer stops, although the microphone is still live");
   audio.stop();
   new FakeTrack("video").clone(); // e.g. a canvas track the page made itself

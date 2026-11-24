@@ -20,12 +20,12 @@ const PLATFORMS = {
   // Meeting rooms (and their waiting room) live at /abc-defg-hij.
   "meet.google.com": { meeting: /^\/[a-z]{3}-[a-z]{4}-[a-z]{3}\/?$/, meetBg: true },
   // Any single name is a room (and its prejoin screen), dots included; files the site serves at the top are not.
-  "meet.jit.si": { meeting: /^\/(?!(?:http-bind|xmpp-websocket)$)(?![^/]+\.(?:css|html|ico|js|json|txt)$)[^/]+$/, meetBg: false },
+  "meet.jit.si": {
+    meeting:
+      /^\/(?!(?:http-bind|xmpp-websocket)$)(?![^/]+\.(?:avif|css|gif|html|ico|jpe?g|js|json|map|mp3|ogg|png|svg|ttf|txt|wasm|wav|webmanifest|webp|woff2?|xml)$)[^/]+$/i,
+    meetBg: false,
+  },
 };
-
-function isMeetingPath(path) {
-  return PLATFORMS["meet.google.com"].meeting.test(path);
-}
 
 // loc: window.location, or anything with hostname and pathname.
 function isMeeting(loc) {
@@ -49,4 +49,4 @@ function valueFromX(x, rect, min, max, step, thumb = 16) {
   return Math.min(max, Math.max(min, snapped));
 }
 
-if (typeof module !== "undefined") module.exports = { DEFAULTS, PLATFORMS, lightColor, isMeetingPath, isMeeting, isDark, valueFromX };
+if (typeof module !== "undefined") module.exports = { DEFAULTS, PLATFORMS, lightColor, isMeeting, isDark, valueFromX };

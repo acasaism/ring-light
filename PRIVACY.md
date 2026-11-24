@@ -17,7 +17,7 @@ Removing the extension deletes all of it.
 
 ## The camera
 
-On every Meet and Jitsi Meet page, a small script notes whether the call's camera is on. It only looks at whether a camera track is live; it never sees the image or hears the sound. It passes that yes or no to the rest of the extension as a message inside the page, which the page's own scripts can also see. The extension only acts on it when **Turn on with the camera** is on, and then stores only whether a camera is on. No data leaves your browser.
+On every Meet and Jitsi Meet page, a small script notes whether the call's camera is on. It only looks at whether a camera track is live; it never sees the image or hears the sound. It passes that yes or no to the rest of the extension as a message inside the page, which the page's own scripts can also see (but not another site that embeds the call). The extension only acts on it when **Turn on with the camera** is on, and then stores only whether a camera is on. No data leaves your browser.
 
 ## Permissions
 
