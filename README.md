@@ -1,27 +1,27 @@
 # Ring Light for Google Meet
 
-A browser extension that turns your screen into a ring light during Google Meet calls. It frames the call with a soft, adjustable light so your face is lit even without a lamp in front of you. Works in Firefox, Chrome, Edge, Opera and Brave.
+A browser extension that turns your screen into a ring light during Google Meet calls. It frames the call with a soft, adjustable light so your face is lit even without a lamp in front of you. Also works on [Jitsi Meet](https://meet.jit.si). Works in Firefox, Chrome, Edge, Opera and Brave.
 
 <p align="center"><img src="docs/demo.gif" alt="Animation: a dark video call; the Ring Light panel opens from the toolbar, Light on is switched on, a frame of light appears around the call and your silhouette brightens; the temperature slider then moves from cool to warm." width="800"><br><a href="https://youtu.be/ApHeht_c__s">Watch the full video on YouTube</a></p>
 
 ## Quick start
 
 1. Install the extension (see [Install](#install)).
-2. Join a Google Meet call.
+2. Join a Google Meet or Jitsi Meet call.
 3. Click the toolbar icon and turn on **Light on**, or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>. To skip this step in future calls, turn on **Turn on with the camera**.
 
-The call shrinks slightly and a frame of light fills the edges of the screen. No Meet control is covered.
+The call shrinks slightly and a frame of light fills the edges of the screen. No control of the call is covered.
 
 ## Features
 
 | Setting | What it does |
 |---------|--------------|
-| **Light on** | Main switch. The light only applies inside a meeting, not on the Meet home page. |
-| **Turn on with the camera** | Optional, off by default. The light turns on by itself when your camera starts in a meeting, and off again when the camera stops (with several Meet tabs, when no camera is left on). Switching the light by hand during the call lasts until the camera next starts or stops. |
+| **Light on** | Main switch. The light only applies inside a meeting (including the screen before you join), not on the app's home page. |
+| **Turn on with the camera** | Optional, off by default. The light turns on by itself when your camera starts in a meeting, and off again when the camera stops (with several call tabs, when no camera is left on). Switching the light by hand during the call lasts until the camera next starts or stops. |
 | **Temperature** | From cool (bluish) to warm (amber) light. |
 | **Intensity** | From dim to full brightness. |
 | **Frame** and **Thickness** | The ring of light around the call, and how wide it is. |
-| **Light up Meet's background** | Turns Meet's dark call background into light too, for more brightness without a frame. |
+| **Light up Meet's background** | Google Meet only. Turns Meet's dark call background into light too, for more brightness without a frame. |
 | **Open light window** | Opens a window filled with light that you can move to a second screen. Double-click for full screen. |
 | **Save as default** / **Reset** | Save your favourite settings and go back to them after experimenting. Saving and resetting can be undone. |
 
@@ -59,12 +59,14 @@ The call in these screenshots is a mock-up; the light effect and the panel are t
 
 - On Meet's "You left the meeting" screen the light stays on, because Meet keeps the same address.
 - **Light up Meet's background** finds Meet's dark areas by colour and size, so it may stop working if Google redesigns Meet. It can also light the tiles of participants with their camera off.
-- **Turn on with the camera** needs the Meet tab to be loaded after the extension: reload Meet tabs that were open when you installed or updated it.
+- **Light up Meet's background** does nothing on Jitsi Meet: Jitsi keeps its own background, and the frame still lights you.
+- Jitsi Meet works on `meet.jit.si` only, not on self-hosted Jitsi servers, and only for rooms at `meet.jit.si/RoomName`.
+- **Turn on with the camera** needs the call tab to be loaded after the extension: reload call tabs that were open when you installed or updated it.
 - The settings panel closes when the light window opens. Browsers close extension panels when they lose focus; open the panel again to keep adjusting.
 
 ## Roadmap
 
-Support for other video call apps that run in the browser is planned: Microsoft Teams, Zoom and Jitsi Meet. [Vote with 👍 or help on issue #1](https://github.com/acasaism/ring-light/issues/1).
+Jitsi Meet is supported. Microsoft Teams and Zoom are planned. [Vote with 👍 or help on issue #1](https://github.com/acasaism/ring-light/issues/1).
 
 ## Privacy
 

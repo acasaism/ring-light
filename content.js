@@ -1,5 +1,5 @@
-// Shrinks the Meet page to the centre and fills the freed edges with light,
-// so no Meet control is covered. Only inside a meeting, not on the landing page.
+// Shrinks the call page (Meet, Jitsi Meet: PLATFORMS in light.js) to the centre and fills the freed edges with light,
+// so no control is covered. Only inside a meeting, not on the landing page.
 let settings = DEFAULTS;
 let path = location.pathname;
 let iconActive; // last state reported, so colour changes do not resend it
@@ -25,6 +25,9 @@ function paintMeetBackground(color) {
   }
 }
 
+// Meet only: other platforms keep their own background.
+const paintsBackground = () => settings.meetBg && PLATFORMS[location.hostname].meetBg;
+
 function clearMeetBackground() {
   for (const n of document.querySelectorAll("[data-rl-bg]")) {
     n.style.removeProperty("background-color");
@@ -37,7 +40,7 @@ function render() {
   const s = settings;
   const html = document.documentElement.style;
   const body = document.body.style;
-  if (!s.on || !isMeetingPath(location.pathname)) {
+  if (!s.on || !isMeeting(location)) {
     html.background = body.transform = body.transformOrigin = body.clipPath = "";
     clearMeetBackground();
     reportActive(false);
@@ -55,19 +58,19 @@ function render() {
   } else {
     html.background = body.transform = body.transformOrigin = body.clipPath = ""; // frameless: light comes only from Meet's background
   }
-  if (s.meetBg) paintMeetBackground(color);
+  if (paintsBackground()) paintMeetBackground(color);
   else clearMeetBackground();
 }
 
 // "Turn on with the camera": camera.js reports the camera; this tab tells background.js when the camera starts or
-// stops, and background.js switches the global "on" for all Meet tabs.
+// stops, and background.js switches the global "on" for all call tabs.
 let camera = false; // camera.js last reported a live camera track
 let cameraOffAt = 0;
 let cameraWanted = false; // camera on (or off for under 2 s), option enabled and inside a meeting
 
 function followCamera() {
   // 2 s grace: Meet restarting the track is neither a stop nor a new start (which would relight a light turned off by hand).
-  const wanted = settings.auto && isMeetingPath(location.pathname) && (camera || (cameraWanted && Date.now() - cameraOffAt < 2000));
+  const wanted = settings.auto && isMeeting(location) && (camera || (cameraWanted && Date.now() - cameraOffAt < 2000));
   if (wanted === cameraWanted) return;
   cameraWanted = wanted;
   browser.runtime.sendMessage({ camera: wanted }).catch(() => {}); // e.g. extension updated: this script is orphaned
@@ -82,7 +85,7 @@ addEventListener("message", (e) => {
   followCamera();
 });
 
-// background.js asks every Meet tab before the camera turns the light off.
+// background.js asks every call tab before the camera turns the light off.
 browser.runtime.onMessage.addListener((msg, sender, respond) => {
   if (msg.cameraQuery) respond(cameraWanted);
 });
@@ -109,7 +112,7 @@ setInterval(() => {
   if (location.pathname !== path) {
     path = location.pathname;
     render();
-  } else if (settings.on && settings.meetBg && isMeetingPath(path)) {
+  } else if (settings.on && isMeeting(location) && paintsBackground()) {
     paintMeetBackground(lightColor(settings.warmth, settings.intensity)); // Meet re-renders its layout often
   }
   followCamera();
