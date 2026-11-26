@@ -28,7 +28,7 @@ To test without other people, open `https://meet.google.com/new` to start a meet
 |------|------|
 | `manifest.json` | One manifest for both browsers: `background.scripts` for Firefox, `background.service_worker` for Chromium |
 | `light.js` | Shared helpers and defaults, loaded first everywhere, including the table of supported video call apps (`PLATFORMS`). Aliases `chrome` to `browser` on Chromium |
-| `content.js` | Runs on the call pages (Meet, Jitsi Meet): draws the frame, lights Meet's background and tells `background.js` when the camera starts or stops |
+| `content.js` | Runs on the call pages (the sites in `PLATFORMS`): draws the frame, lights Meet's background and tells `background.js` when the camera starts or stops |
 | `camera.js` | Runs on the call pages in the page's own world (`world: "MAIN"`, at `document_start`, in every frame): watches the camera tracks from `getUserMedia` and tells `content.js` whether the camera is on. No extension API there |
 | `background.js` | Keyboard shortcut, per-tab toolbar icon, and turning the light on and off with the camera for all call tabs |
 | `popup.html`, `popup.js` | The settings panel |
@@ -56,7 +56,7 @@ A test should check what the user sees or what gets saved, through the same entr
 
 Each app is one entry in `PLATFORMS` in `light.js`, keyed by hostname:
 
-- `meeting`: a regular expression for the paths of a call (and the screen before joining), never the app's home page or the files it serves.
+- `meeting`: a regular expression for the paths of a call (and the screen before joining), never the app's home page or the files it serves. An app served at several hostnames (Zoom: `app.zoom.us` and `zoom.us`) gets one entry per hostname; they can share the same object.
 - `meetBg`: `true` only if **Light up Meet's background** works there. It looks for Meet's dark areas, so new apps start with `false`; there, that option draws the frame when **Frame** is off.
 
 Then:
