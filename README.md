@@ -39,17 +39,9 @@ The call in these screenshots is a mock-up; the light effect and the panel are t
 
 ## Install
 
-Store listings are on the way. Until then, load it from source:
+**Firefox** (128 or later): [get it on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/ring-light-for-google-meet/).
 
-**Firefox** (128 or later)
-
-1. Download or clone this repository.
-2. Open `about:debugging#/runtime/this-firefox`.
-3. Click **Load Temporary Add-on** and pick `manifest.json`.
-
-Temporary add-ons are removed when Firefox restarts.
-
-**Chrome, Edge, Opera, Brave** (Chromium 121 or later)
+**Chrome, Edge, Opera, Brave** (Chromium 121 or later): the Chrome Web Store listing is on the way. Until then, load it from source:
 
 1. Download or clone this repository.
 2. Open `chrome://extensions` (`edge://extensions`, `opera://extensions`, `brave://extensions`).
