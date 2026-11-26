@@ -66,7 +66,7 @@ The call in these screenshots is a mock-up; the light effect and the panel are t
 
 ## Roadmap
 
-Jitsi Meet is supported. Microsoft Teams and Zoom are planned. [Vote with 👍 or help on issue #1](https://github.com/acasaism/ring-light/issues/1).
+Jitsi Meet and the Zoom web client (`app.zoom.us`, `zoom.us`) are supported. Microsoft Teams is planned. [Vote with 👍 or help on issue #1](https://github.com/acasaism/ring-light/issues/1).
 
 ## Privacy
 

@@ -63,6 +63,8 @@ assert.strictEqual(cameraScript.run_at, "document_start", "camera.js runs before
 // Every video call app in the platform table gets its host permission and both content scripts, and nothing else does
 const platformHosts = Object.keys(PLATFORMS).map((h) => `https://${h}/*`);
 assert.ok(platformHosts.includes("https://meet.jit.si/*"), "Jitsi Meet is a supported platform");
+// Zoom serves its web client both at app.zoom.us and at zoom.us (/wc/<id>/join answers 200 there, no redirect)
+assert.ok(platformHosts.includes("https://app.zoom.us/*") && platformHosts.includes("https://zoom.us/*"), "Zoom web client is a supported platform");
 assert.deepStrictEqual(manifest.host_permissions, platformHosts, "host permission for every platform");
 assert.deepStrictEqual(manifest.content_scripts.find((c) => c.js.includes("content.js")).matches, platformHosts, "content.js on every platform");
 assert.deepStrictEqual(cameraScript.matches, platformHosts, "camera.js on every platform");
@@ -93,6 +95,17 @@ for (const p of ["/MyTeamStandup/", "/static/close.html", "/static/close3.html",
   "/http-bind", "/xmpp-websocket", "/apple-touch-icon.png", "/favicon.svg", "/sitemap.xml", "/manifest.webmanifest",
   "/libs/lib-jitsi-meet.wasm", "/app.wasm", "/logo.JPG", "/bg.webp", "/fonts.woff2", "/app.js.map", "/ring.mp3"])
   assert.ok(!isMeeting(jitsiAt(p)), `not a Jitsi room: ${p}`);
+// Zoom web client: /wc/<id>/join (join screen and call), /wc/<id>/start (host);
+// /wc/join/<id> redirects to /wc/<id>/join. The /j/<id> launcher page only offers to open the app.
+for (const host of ["app.zoom.us", "zoom.us"]) {
+  const zoomAt = at(host);
+  for (const p of ["/wc/123456789/join", "/wc/12345678901/start", "/wc/join/1234567890", "/wc/123456789/join/"])
+    assert.ok(isMeeting(zoomAt(p)), `Zoom meeting: ${host}${p}`);
+  for (const p of ["/", "/wc", "/wc/", "/wc/join", "/wc/home", "/wc/123456789", "/wc/123456789/joined", "/wc/abc/join",
+    "/j/123456789", "/s/123456789", "/signin", "/profile", "/meeting", "/wc/join/abc"])
+    assert.ok(!isMeeting(zoomAt(p)), `not a Zoom meeting: ${host}${p}`);
+}
+assert.ok(!isMeeting(at("us02web.zoom.us")("/wc/123456789/join")), "Zoom company subdomains are not covered");
 assert.ok(!isMeeting(meetAt("/MyTeamStandup")), "Jitsi rooms are not Meet meetings");
 assert.ok(!isMeeting(at("example.com")("/abc-defg-hij")), "unknown site");
 
@@ -289,6 +302,16 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   poll();
   assert.strictEqual(body.style.transform, "", "no light on the Jitsi home page");
   assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "Jitsi home page: icon off");
+  // Zoom web client: the frame in a meeting, nothing on its other pages, and no background painting
+  Object.assign(location, { hostname: "app.zoom.us", pathname: "/wc/123456789/join", origin: "https://app.zoom.us" });
+  poll();
+  assert.strictEqual(body.style.transform, "scale(0.8)", "frame in a Zoom web client meeting");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: true }, "Zoom meeting: icon on");
+  assert.strictEqual(stage.style.backgroundColor, "", "no background painting on Zoom");
+  location.pathname = "/wc/home";
+  poll();
+  assert.strictEqual(body.style.transform, "", "no light on Zoom's home page");
+  assert.deepStrictEqual(sent.at(-1), { lightActive: false }, "Zoom home page: icon off");
   Object.assign(location, { hostname: "meet.google.com", pathname: "/abc-defg-hij", origin: "https://meet.google.com" });
   stored = { ...stored, on: false, meetBg: false };
   listener(); await tick();
@@ -610,6 +633,18 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     jitsi.camera(false); await tick();
     await ext.wait(2000);
     assert.strictEqual(ext.storage.on, false, "Jitsi's camera stops: light off");
+
+    // Zoom web client tabs are asked too (background.js queries every host in the table)
+    const zoom = ext.tab(4, "zoom.us", "/wc/123456789/join");
+    zoom.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts in a Zoom web client meeting: light on");
+    jitsi.camera(true); await tick();
+    jitsi.camera(false); await tick();
+    await ext.wait(3000);
+    assert.strictEqual(ext.storage.on, true, "Jitsi's camera stops while Zoom's is on: light stays on");
+    zoom.camera(false); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "Zoom's camera stops: light off");
   }
 
   // camera.js runs in Meet's own world: it wraps getUserMedia and track and stream clones, and polls the camera tracks

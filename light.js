@@ -13,6 +13,10 @@ function lightColor(warmth, intensity) {
   return `rgb(${rgb.join(", ")})`;
 }
 
+// Zoom web client: /wc/<id>/join (join screen and call), /wc/<id>/start (host),
+// /wc/join/<id> (redirects to the first). Served at both its hosts; the /j/<id> launcher page is not a call.
+const ZOOM = { meeting: /^\/wc\/(\d+\/(join|start)|join\/\d+)(\/|$)/, meetBg: false };
+
 // Supported video call apps, by hostname. Adding one: an entry here, its host permission and content script matches
 // in manifest.json, and tests (see CONTRIBUTING.md). meeting: the paths of a call, not the app's home page;
 // meetBg: whether "Light up Meet's background" applies (it looks for Meet's own dark areas).
@@ -25,6 +29,8 @@ const PLATFORMS = {
       /^\/(?!(?:http-bind|xmpp-websocket)$)(?![^/]+\.(?:avif|css|gif|html|ico|jpe?g|js|json|map|mp3|ogg|png|svg|ttf|txt|wasm|wav|webmanifest|webp|woff2?|xml)$)[^/]+$/i,
     meetBg: false,
   },
+  "app.zoom.us": ZOOM,
+  "zoom.us": ZOOM,
 };
 
 // loc: window.location, or anything with hostname and pathname.

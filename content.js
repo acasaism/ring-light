@@ -1,4 +1,4 @@
-// Shrinks the call page (Meet, Jitsi Meet: PLATFORMS in light.js) to the centre and fills the freed edges with light,
+// Shrinks the call page (the apps in PLATFORMS, light.js) to the centre and fills the freed edges with light,
 // so no control is covered. Only inside a meeting, not on the landing page.
 let settings = DEFAULTS;
 let path = location.pathname;
