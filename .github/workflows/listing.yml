@@ -1,0 +1,31 @@
+# Publishes the store texts in docs/store/listings.md to the addons.mozilla.org listing, by hand from the
+# Actions tab ("Run workflow") after editing them. Releases update the listing themselves (release.yml).
+name: Store listing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firefox:
+    name: Update the addons.mozilla.org listing
+    # Only master: other branches may describe features that are not released yet.
+    if: ${{ github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run tests
+        run: node test.js
+
+      - name: Publish the listing texts
+        env:
+          AMO_API_KEY: ${{ secrets.AMO_API_KEY }}
+          AMO_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+        run: node scripts/amo-listing.js

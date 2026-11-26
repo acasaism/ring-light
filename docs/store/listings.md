@@ -1,6 +1,6 @@
 # Store listings
 
-Name, summary and description for each language, ready to paste into addons.mozilla.org and the Chrome Web Store. Summaries stay within 132 characters, the Chrome Web Store limit (addons.mozilla.org allows 250).
+Name, summary and description for each language. `scripts/amo-listing.js` publishes them to addons.mozilla.org (see [CONTRIBUTING.md](../../CONTRIBUTING.md#store-listing-texts)); paste them into the Chrome Web Store by hand. Summaries stay within 132 characters, the Chrome Web Store limit (addons.mozilla.org allows 250).
 
 Only the Spanish text has been reviewed by a native speaker. Corrections are welcome: see [CONTRIBUTING.md](../../CONTRIBUTING.md#translations).
 
@@ -8,9 +8,9 @@ Only the Spanish text has been reviewed by a native speaker. Corrections are wel
 |----------|--------------------|------------------|
 | English | English (US) | English |
 | Spanish | Español (de España) | Spanish |
-| Catalan | Català | Catalan |
-| Galician | Galego | — (not supported) |
-| Basque | Euskara | Basque |
+| Catalan | — (not offered) | Catalan |
+| Galician | — (not offered) | — (not supported) |
+| Basque | — (not offered) | Basque |
 | French | Français | French |
 | German | Deutsch | German |
 | Italian | Italiano | Italian |
@@ -51,6 +51,8 @@ Features
 Privacy: no data collected, no network requests. Settings stay in your browser.
 
 Open source (MIT): https://github.com/acasaism/ring-light
+
+▶ See it in action: https://youtu.be/ApHeht_c__s
 ```
 
 ## Spanish
@@ -83,6 +85,8 @@ Funciones
 Privacidad: no recoge datos ni hace peticiones de red. Los ajustes se quedan en tu navegador.
 
 Código abierto (MIT): https://github.com/acasaism/ring-light
+
+▶ Míralo en acción: https://youtu.be/ApHeht_c__s
 ```
 
 ## Catalan
@@ -115,6 +119,8 @@ Funcions
 Privadesa: no recull dades ni fa peticions de xarxa. La configuració es queda al teu navegador.
 
 Codi obert (MIT): https://github.com/acasaism/ring-light
+
+▶ Mira-ho en acció: https://youtu.be/ApHeht_c__s
 ```
 
 ## Galician
@@ -147,6 +153,8 @@ Funcións
 Privacidade: non recolle datos nin fai peticións de rede. Os axustes quedan no teu navegador.
 
 Código aberto (MIT): https://github.com/acasaism/ring-light
+
+▶ Mírao en acción: https://youtu.be/ApHeht_c__s
 ```
 
 ## Basque
@@ -179,6 +187,8 @@ Ezaugarriak
 Pribatutasuna: ez du daturik biltzen eta ez du sare-eskaerarik egiten. Ezarpenak zure nabigatzailean geratzen dira.
 
 Kode irekia (MIT): https://github.com/acasaism/ring-light
+
+▶ Ikusi nola dabilen: https://youtu.be/ApHeht_c__s
 ```
 
 ## French
@@ -211,6 +221,8 @@ Fonctionnalités
 Confidentialité : aucune donnée collectée, aucune requête réseau. Vos réglages restent dans votre navigateur.
 
 Open source (MIT) : https://github.com/acasaism/ring-light
+
+▶ Voyez-le en action : https://youtu.be/ApHeht_c__s
 ```
 
 ## German
@@ -243,6 +255,8 @@ Funktionen
 Datenschutz: keine Datenerfassung, keine Netzwerkanfragen. Deine Einstellungen bleiben in deinem Browser.
 
 Open Source (MIT): https://github.com/acasaism/ring-light
+
+▶ So sieht es aus: https://youtu.be/ApHeht_c__s
 ```
 
 ## Italian
@@ -275,6 +289,8 @@ Funzionalità
 Privacy: nessun dato raccolto, nessuna richiesta di rete. Le impostazioni restano nel tuo browser.
 
 Open source (MIT): https://github.com/acasaism/ring-light
+
+▶ Guardalo in azione: https://youtu.be/ApHeht_c__s
 ```
 
 ## Portuguese (Brazil)
@@ -307,6 +323,8 @@ Recursos
 Privacidade: nenhum dado coletado, nenhuma requisição de rede. Suas configurações ficam no seu navegador.
 
 Código aberto (MIT): https://github.com/acasaism/ring-light
+
+▶ Veja em ação: https://youtu.be/ApHeht_c__s
 ```
 
 ## Portuguese (Portugal)
@@ -339,6 +357,8 @@ Funcionalidades
 Privacidade: nenhum dado recolhido, nenhum pedido de rede. As suas definições ficam no seu navegador.
 
 Código aberto (MIT): https://github.com/acasaism/ring-light
+
+▶ Veja em ação: https://youtu.be/ApHeht_c__s
 ```
 
 ## Japanese
@@ -371,6 +391,8 @@ Google Meet の通話中、画面をリングライトに変えます。やわ�
 プライバシー：データは一切収集せず、ネットワーク通信も行いません。設定はブラウザ内にのみ保存されます。
 
 オープンソース（MIT）：https://github.com/acasaism/ring-light
+
+▶ 動画で見る：https://youtu.be/ApHeht_c__s
 ```
 
 ## Traditional Chinese
@@ -403,4 +425,6 @@ Google Meet の通話中、画面をリングライトに変えます。やわ�
 隱私：不收集任何資料，也不發出任何網路請求。設定只會保存在你的瀏覽器中。
 
 開放原始碼（MIT）：https://github.com/acasaism/ring-light
+
+▶ 觀看示範影片：https://youtu.be/ApHeht_c__s
 ```

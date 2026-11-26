@@ -35,6 +35,7 @@ To test without other people, open `https://meet.google.com/new` to start a meet
 | `_locales/` | Translations (English and Spanish) |
 | `test.js` | All tests, using fake browser and DOM objects |
 | `scripts/build.sh` | Builds the store zip into `dist/` |
+| `scripts/amo-listing.js` | Publishes the texts in `docs/store/listings.md` to addons.mozilla.org |
 
 ## Tests
 
@@ -79,6 +80,15 @@ Good to know:
 - Releases marked as **pre-release** are not submitted.
 - GitHub runs the workflow file from the tagged commit, so it only applies to versions released after it was added.
 - If the submission fails, fix the cause and re-run the job from the Actions tab. If addons.mozilla.org already accepted that version, bump the version and release again: a version number can only be submitted once.
+
+## Store listing texts
+
+`docs/store/listings.md` holds the name, summary and description in every language. Each release publishes them to addons.mozilla.org right after submitting the version. To publish an edit between releases, merge it into `master` and run the [Store listing workflow](.github/workflows/listing.yml) from the Actions tab (**Store listing** → **Run workflow**). Both use the `AMO_API_KEY` and `AMO_API_SECRET` secrets.
+
+- `node scripts/amo-listing.js --dry-run` prints what would be sent, without credentials.
+- addons.mozilla.org does not offer Catalan, Galician or Basque. Catalan and Basque are only used on the Chrome Web Store; Galician is not used by either store for now.
+- The Chrome Web Store texts are still pasted by hand.
+- A pre-release that is later turned into a full release is neither submitted nor listed: submit it by hand and run **Store listing**.
 
 ## Reporting bugs
 

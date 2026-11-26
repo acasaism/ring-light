@@ -67,6 +67,53 @@ assert.strictEqual(lightColor(100, 100), "rgb(255, 214, 170)", "full warm");
 assert.strictEqual(lightColor(-100, 100), "rgb(205, 225, 255)", "full cool");
 assert.strictEqual(lightColor(0, 50), "rgb(128, 128, 128)", "intensity dims");
 
+// Store listing sync (scripts/amo-listing.js): docs/store/listings.md is the source of the addons.mozilla.org texts.
+{
+  const { parseListings, amoPayload, jwt } = require("./scripts/amo-listing.js");
+  const listings = parseListings(fs.readFileSync(__dirname + "/docs/store/listings.md", "utf8"));
+  assert.deepStrictEqual(Object.keys(listings), ["English", "Spanish", "Catalan", "Galician", "Basque", "French", "German",
+    "Italian", "Portuguese (Brazil)", "Portuguese (Portugal)", "Japanese", "Traditional Chinese"], "every language section is read");
+  for (const [lang, l] of Object.entries(listings)) {
+    assert.ok(l.name && l.summary && l.description, `${lang}: name, summary and description`);
+    assert.ok(l.summary.length <= 132, `${lang}: summary fits the Chrome Web Store limit`);
+    assert.ok(l.description.includes("https://youtu.be/ApHeht_c__s"), `${lang}: description links the video`);
+    assert.ok(!l.description.includes("```"), `${lang}: no code fence leaks into the text`);
+  }
+  assert.strictEqual(listings.English.name, "Ring Light for Google Meet");
+  const body = amoPayload(listings);
+  const amoLocales = ["en-US", "es-ES", "fr", "de", "it", "pt-BR", "pt-PT", "ja", "zh-TW"];
+  for (const field of ["name", "summary", "description"])
+    assert.deepStrictEqual(Object.keys(body[field]).sort(), [...amoLocales].sort(), `${field}: only the languages AMO supports (no ca, gl, eu)`);
+  assert.strictEqual(body.summary["es-ES"], listings.Spanish.summary, "Spanish goes to es-ES");
+  assert.strictEqual(body.description["zh-TW"], listings["Traditional Chinese"].description, "Traditional Chinese goes to zh-TW");
+  assert.deepStrictEqual(Object.keys(body).sort(), ["description", "name", "summary"], "nothing else is changed");
+
+  const crypto = require("node:crypto");
+  const token = jwt("user:1:2", "secret", 1000);
+  const [h, p, sig] = token.split(".");
+  const dec = (x) => JSON.parse(Buffer.from(x, "base64url"));
+  assert.deepStrictEqual(dec(h), { alg: "HS256", typ: "JWT" });
+  const claims = dec(p);
+  assert.strictEqual(claims.iss, "user:1:2");
+  assert.strictEqual(claims.iat, 1000);
+  assert.ok(claims.exp > claims.iat && claims.exp - claims.iat <= 300, "expires within AMO's five minutes");
+  assert.ok(claims.jti && claims.jti !== dec(jwt("user:1:2", "secret", 1000).split(".")[1]).jti, "a new jti each time");
+  assert.strictEqual(sig, crypto.createHmac("sha256", "secret").update(`${h}.${p}`).digest("base64url"), "signed with HMAC-SHA256");
+
+  const run = (args, env) => require("node:child_process").spawnSync("node", [__dirname + "/scripts/amo-listing.js", ...args],
+    { env: { PATH: process.env.PATH, ...env }, encoding: "utf8" });
+  const dry = run(["--dry-run"], {});
+  assert.strictEqual(dry.status, 0, "dry run needs no credentials");
+  assert.deepStrictEqual(JSON.parse(dry.stdout), body, "dry run prints the request body");
+  const noKeys = run([], {});
+  assert.strictEqual(noKeys.status, 1, "a real run without credentials fails");
+  assert.match(noKeys.stderr, /AMO_API_KEY/, "and says which secret is missing");
+  const typo = run(["--dryrun"], { AMO_API_KEY: "k", AMO_API_SECRET: "s" });
+  assert.strictEqual(typo.status, 1, "a mistyped option never publishes");
+  assert.match(typo.stderr, /Unknown argument: --dryrun/);
+  const crlf = fs.readFileSync(__dirname + "/docs/store/listings.md", "utf8").replace(/\n/g, "\r\n");
+  assert.deepStrictEqual(parseListings(crlf), listings, "Windows line endings read the same");
+}
 // Release workflow: a GitHub release is only submitted to the stores when its tag matches the manifest version
 const { spawnSync } = require("node:child_process");
 const checkTag = (tag) => spawnSync("sh", [__dirname + "/scripts/check-tag.sh", tag]);

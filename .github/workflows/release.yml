@@ -55,3 +55,10 @@ jobs:
           unzip -q dist/ring-light-*.zip -d "$RUNNER_TEMP/ext"
           npx --yes web-ext@8.10.0 sign --channel=listed --approval-timeout=0 \
             --source-dir="$RUNNER_TEMP/ext" --artifacts-dir="$RUNNER_TEMP/web-ext-artifacts"
+
+      # Only after the version was submitted, so the listing never describes a version that is not on its way.
+      - name: Publish the listing texts from docs/store/listings.md
+        env:
+          AMO_API_KEY: ${{ secrets.AMO_API_KEY }}
+          AMO_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+        run: node scripts/amo-listing.js
