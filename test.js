@@ -35,7 +35,7 @@ const swCtx = vm.createContext({
   chrome: {
     commands: { onCommand: { addListener() {} } },
     action: { setIcon() {} },
-    runtime: { onMessage: { addListener() {} } },
+    runtime: { onMessage: { addListener() {} }, onStartup: { addListener() {} }, onInstalled: { addListener() {} } },
     storage: { local: { get: async (d) => d }, onChanged: { addListener() {} } },
     tabs: { onRemoved: { addListener() {} } },
   },
@@ -246,6 +246,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   function extension() {
     let storage = { ...DEFAULTS };
     let clock = 1e6, onBackgroundMessage, onCommand;
+    const lifecycle = { onStartup: [], onInstalled: [] };
     const changeListeners = [], removedListeners = [], tabs = new Map();
     const local = {
       get: async (d) => ({ ...d, ...storage }),
@@ -255,6 +256,11 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
         storage = { ...storage, ...v };
         for (const fn of changeListeners) fn(changes, "local");
       },
+      remove: async (k) => {
+        const { [k]: oldValue, ...rest } = storage;
+        storage = rest;
+        for (const fn of changeListeners) fn({ [k]: { oldValue } }, "local");
+      },
     };
     const onChanged = { addListener: (fn) => changeListeners.push(fn) };
     const run = (ctx, file) => vm.runInContext(fs.readFileSync(__dirname + "/" + file, "utf8"), ctx);
@@ -262,7 +268,11 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
       browser: {
         commands: { onCommand: { addListener: (fn) => (onCommand = fn) } },
         action: { setIcon() {} },
-        runtime: { onMessage: { addListener: (fn) => (onBackgroundMessage = fn) } },
+        runtime: {
+          onMessage: { addListener: (fn) => (onBackgroundMessage = fn) },
+          onStartup: { addListener: (fn) => lifecycle.onStartup.push(fn) },
+          onInstalled: { addListener: (fn) => lifecycle.onInstalled.push(fn) },
+        },
         storage: { local, onChanged },
         tabs: {
           query: async (q) => {
@@ -287,6 +297,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
       get storage() { return storage; },
       user: async (v) => { await local.set(v); await tick(); }, // the panel
       shortcut: () => onCommand("toggle-light"),
+      fire: async (event) => { for (const fn of lifecycle[event]) fn({}); await tick(); },
       wait: async (ms) => { clock += ms; for (const t of tabs.values()) t.poll(); await tick(); },
       tab(id) {
         const t = { id, events: {}, body: { style: {} }, location: { pathname: "/abc-defg-hij", origin: "https://meet.google.com" } };
@@ -378,20 +389,23 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     await ext.wait(2000);
     assert.strictEqual(ext.storage.on, false, "and off with the camera");
 
-    // Turned on by hand: the camera never turns it off
+    // The camera decides at each start and stop, however the light was switched before
     await ext.user({ on: true });
     a.camera(true); await tick();
     a.camera(false); await tick();
     await ext.wait(5000);
-    assert.strictEqual(ext.storage.on, true, "light turned on by hand stays on when the camera stops");
-    await ext.user({ on: false });
-    // Alt+Shift+L just as the camera starts: the light was turned on by hand
+    assert.strictEqual(ext.storage.on, false, "light turned on by hand before the camera: off when the camera stops");
+    // Alt+Shift+L just as the camera starts
     ext.shortcut();
     a.camera(true); await tick();
     assert.strictEqual(ext.storage.on, true, "shortcut and camera at once: light on");
     a.camera(false); await tick();
     await ext.wait(5000);
-    assert.strictEqual(ext.storage.on, true, "a light turned on by the shortcut as the camera started stays on");
+    assert.strictEqual(ext.storage.on, false, "and off when the camera stops");
+    // Turned on by hand while the camera is off: stays on until the camera changes
+    await ext.user({ on: true });
+    await ext.wait(5000);
+    assert.strictEqual(ext.storage.on, true, "turned on by hand with the camera off: stays on");
     await ext.user({ on: false });
 
     // Only inside a meeting
@@ -418,11 +432,13 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     await ext.wait(5000);
     assert.strictEqual(ext.storage.on, true, "and the camera no longer turns it off");
     await ext.user({ auto: true });
+    assert.strictEqual(ext.storage.on, true, "enabling the option again with the camera off changes nothing");
+    await ext.tab(9).close(); // any other tab closing
+    assert.strictEqual(ext.storage.on, true, "closing another tab does not turn off a light the camera is not using");
     a.camera(true); await tick();
     a.camera(false); await tick();
     await ext.wait(5000);
-    assert.strictEqual(ext.storage.on, true, "not even after enabling the option again");
-    await ext.user({ on: false });
+    assert.strictEqual(ext.storage.on, false, "after enabling the option again, the camera turns the light off");
 
     // Leaving the page while the camera had turned the light on (best effort)
     a.camera(true); await tick();
@@ -486,8 +502,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     c.camera(true); d.camera(true); await tick();
     c.camera(false); d.camera(false); await tick();
     await ext.wait(5000);
-    assert.strictEqual(ext.storage.on, true, "light turned on by hand: no camera turns it off");
-    await ext.user({ on: false });
+    assert.strictEqual(ext.storage.on, false, "light turned on by hand: off when the last camera stops");
 
     // A Meet tab left over from before an extension update cannot answer and is not counted
     const old = ext.tab(5);
@@ -506,6 +521,20 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     c.camera(false); await tick();
     await ext.wait(2000);
     assert.strictEqual(ext.storage.on, false, "the orphaned tab does not keep the light on");
+
+    // A camera that can no longer report its stop (browser quit or crashed mid-call, extension updated) is forgotten,
+    // so closing an unrelated tab later does not turn off a light switched on by hand
+    for (const event of ["onStartup", "onInstalled"]) {
+      const lost = ext.tab(10);
+      lost.camera(true); await tick();
+      lost.orphan();
+      await ext.fire(event);
+      await ext.user({ on: false });
+      await ext.user({ on: true });
+      await ext.tab(11).close();
+      assert.strictEqual(ext.storage.on, true, `${event}: a lost camera does not turn off a light switched on by hand`);
+      await ext.user({ on: false });
+    }
   }
 
   // camera.js runs in Meet's own world: it wraps getUserMedia and track and stream clones, and polls the camera tracks
@@ -580,7 +609,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   global.browser = {
     commands: { onCommand: { addListener: (fn) => (command = fn) } },
     action: { setIcon: ({ path, tabId }) => (tabId === undefined ? (icon = path) : (tabIcons[tabId] = path)) },
-    runtime: { onMessage: { addListener: (fn) => (messageListener = fn) } },
+    runtime: { onMessage: { addListener: (fn) => (messageListener = fn) }, onStartup: { addListener() {} }, onInstalled: { addListener() {} } },
     tabs: { onRemoved: { addListener() {} } },
     storage: {
       local: {

@@ -10,14 +10,14 @@ Everything is kept in your browser's extension storage, on your own device:
 |------|-----|
 | Your settings (light on/off, turn on with the camera, temperature, intensity, frame, thickness, Meet background) | To keep them between sessions |
 | Your saved default settings, if you save them | So **Reset** can return to them |
-| Whether the camera turned the light on | So the light goes off again only when the camera stops, not when you turned it on yourself |
+| Whether a camera is on in a Meet call | So the light goes off when the last camera stops, and closing an unrelated tab does not turn it off |
 | Internal IDs of the light windows the extension opened | So the panel can count and close them |
 
 Removing the extension deletes all of it.
 
 ## The camera
 
-On every Meet page, a small script notes whether the call's camera is on. It only looks at whether a camera track is live; it never sees the image or hears the sound. It passes that yes or no to the rest of the extension as a message inside the page, which Meet's own scripts can also see. The extension only acts on it when **Turn on with the camera** is on, and then stores only whether the camera turned the light on. No data leaves your browser.
+On every Meet page, a small script notes whether the call's camera is on. It only looks at whether a camera track is live; it never sees the image or hears the sound. It passes that yes or no to the rest of the extension as a message inside the page, which Meet's own scripts can also see. The extension only acts on it when **Turn on with the camera** is on, and then stores only whether a camera is on. No data leaves your browser.
 
 ## Permissions
 
