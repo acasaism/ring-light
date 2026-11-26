@@ -17,7 +17,7 @@ The call shrinks slightly and a frame of light fills the edges of the screen. No
 | Setting | What it does |
 |---------|--------------|
 | **Light on** | Main switch. The light only applies inside a meeting, not on the Meet home page. |
-| **Turn on with the camera** | Optional, off by default. The light turns on by itself when your camera starts in a meeting, and off again when the camera stops (with several Meet tabs, when no camera is left on). If you turn the light off during the call, it stays off until the camera starts again; if you turned it on yourself, the camera never turns it off. |
+| **Turn on with the camera** | Optional, off by default. The light turns on by itself when your camera starts in a meeting, and off again when the camera stops (with several Meet tabs, when no camera is left on). Switching the light by hand during the call lasts until the camera next starts or stops. |
 | **Temperature** | From cool (bluish) to warm (amber) light. |
 | **Intensity** | From dim to full brightness. |
 | **Frame** and **Thickness** | The ring of light around the call, and how wide it is. |
