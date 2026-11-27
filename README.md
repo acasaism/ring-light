@@ -66,7 +66,7 @@ The call in these screenshots is a mock-up; the light effect and the panel are t
 
 ## Roadmap
 
-Jitsi Meet and the Zoom web client (`app.zoom.us`, `zoom.us`) are supported. Microsoft Teams is planned. [Vote with 👍 or help on issue #1](https://github.com/acasaism/ring-light/issues/1).
+Jitsi Meet and the Zoom web client (`app.zoom.us`, `zoom.us`) are supported. Experimental, not yet verified: Microsoft Teams on the web (`teams.microsoft.com`, `teams.cloud.microsoft`, `teams.live.com`). The code is in place, but nobody has tried it in a real Teams meeting yet. Teams' address does not change in a call, so the light applies while the page has an active call connection. Before it is released, the store listings and the permission justifications must mention Teams. [Vote with 👍 or help on issue #1](https://github.com/acasaism/ring-light/issues/1).
 
 ## Privacy
 

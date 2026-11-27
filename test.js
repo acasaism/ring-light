@@ -65,6 +65,9 @@ const platformHosts = Object.keys(PLATFORMS).map((h) => `https://${h}/*`);
 assert.ok(platformHosts.includes("https://meet.jit.si/*"), "Jitsi Meet is a supported platform");
 // Zoom serves its web client both at app.zoom.us and at zoom.us (/wc/<id>/join answers 200 there, no redirect)
 assert.ok(platformHosts.includes("https://app.zoom.us/*") && platformHosts.includes("https://zoom.us/*"), "Zoom web client is a supported platform");
+// Teams: work and school accounts (teams.microsoft.com, which redirects to teams.cloud.microsoft from 2026) and personal (teams.live.com)
+for (const host of ["teams.microsoft.com", "teams.cloud.microsoft", "teams.live.com"])
+  assert.ok(platformHosts.includes(`https://${host}/*`), `Microsoft Teams is a supported platform: ${host}`);
 assert.deepStrictEqual(manifest.host_permissions, platformHosts, "host permission for every platform");
 assert.deepStrictEqual(manifest.content_scripts.find((c) => c.js.includes("content.js")).matches, platformHosts, "content.js on every platform");
 assert.deepStrictEqual(cameraScript.matches, platformHosts, "camera.js on every platform");
@@ -106,6 +109,17 @@ for (const host of ["app.zoom.us", "zoom.us"]) {
     assert.ok(!isMeeting(zoomAt(p)), `not a Zoom meeting: ${host}${p}`);
 }
 assert.ok(!isMeeting(at("us02web.zoom.us")("/wc/123456789/join")), "Zoom company subdomains are not covered");
+// Teams (NOT VERIFIED in a real meeting): the address does not change in a call, so a call is the page holding a connected
+// call connection (isMeeting's second argument, from camera.js), wherever it is
+for (const host of ["teams.microsoft.com", "teams.cloud.microsoft", "teams.live.com"]) {
+  for (const p of ["/v2/", "/", "/l/meetup-join/19%3ameeting_abc%40thread.v2/0"]) {
+    assert.ok(!isMeeting(at(host)(p)), `Teams without a call connection is not a call: ${host}${p}`);
+    assert.ok(isMeeting(at(host)(p), true), `Teams with a call connection is a call: ${host}${p}`);
+  }
+}
+assert.ok(!isMeeting(meetAt("/"), true) && !isMeeting(jitsiAt("/"), true) && !isMeeting(at("app.zoom.us")("/wc/home"), true),
+  "a call connection does not make a call on the apps detected by address");
+assert.ok(!isMeeting(at("example.com")("/"), true), "nor on unknown sites");
 assert.ok(!isMeeting(meetAt("/MyTeamStandup")), "Jitsi rooms are not Meet meetings");
 assert.ok(!isMeeting(at("example.com")("/abc-defg-hij")), "unknown site");
 
@@ -375,7 +389,15 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
       user: async (v) => { await local.set(v); await tick(); }, // the panel
       shortcut: () => onCommand("toggle-light"),
       fire: async (event) => { for (const fn of lifecycle[event]) fn({}); await tick(); },
-      wait: async (ms) => { clock += ms; for (const t of tabs.values()) t.poll(); await tick(); },
+      // in 1 s steps, like the pages' timers
+      wait: async (ms) => {
+        for (let left = ms; left > 0; left -= 1000) {
+          clock += Math.min(left, 1000);
+          for (const t of tabs.values()) { t.heartbeat(); t.poll(); }
+          await tick();
+        }
+      },
+      skip: (ms) => (clock += ms), // time passes before the tabs' timers run (e.g. a throttled background tab)
       tab(id, hostname = "meet.google.com", pathname = "/abc-defg-hij") {
         const t = { id, events: {}, body: { style: {} }, location: { hostname, pathname, origin: `https://${hostname}` } };
         const gone = () => Promise.reject(new Error("Extension context invalidated."));
@@ -400,7 +422,14 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
         run(ctx, "light.js");
         run(ctx, "content.js");
         tabs.set(id, t);
-        t.camera = (on) => t.events.message({ origin: t.location.origin, data: { ringLight: { camera: on } } });
+        const send = (ringLight) => t.events.message((t.last = { origin: t.location.origin, data: { ringLight } }));
+        t.camera = (on) => send({ camera: on });
+        // camera.js on Teams also says whether a call connection is connected
+        t.call = (camera, call) => send({ camera, call });
+        // the frame holding the tracks is removed, navigates or is frozen before camera.js says they stopped
+        t.silence = () => (t.silent = true);
+        // camera.js repeats its last report every second while it watches something (see wait)
+        t.heartbeat = () => t.last && !t.silent && t.events.message(t.last);
         // the extension was updated or reloaded: this old content script can no longer reach it
         t.orphan = () => { t.orphaned = true; t.onMessage = null; };
         t.close = async () => {
@@ -647,6 +676,93 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     assert.strictEqual(ext.storage.on, false, "Zoom's camera stops: light off");
   }
 
+  // Microsoft Teams (NOT VERIFIED in a real meeting): the light applies while the page has a connected call connection
+  {
+    const ext = extension();
+    const teams = ext.tab(1, "teams.microsoft.com", "/v2/");
+    await ext.user({ on: true });
+    teams.poll();
+    assert.strictEqual(teams.body.style.transform, "", "Teams without a call: no light, although the switch is on");
+    teams.call(false, true); await tick();
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "call connected (camera off): in a call, light applied at once");
+    teams.call(false, true); await tick(); // heartbeat
+    teams.call(true, true); await tick();
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "camera on too: still applied");
+    teams.call(false, false); await tick();
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "connection closed for 1 s: still a call (reconnecting)");
+    teams.call(false, true); await tick();
+    await ext.wait(1500);
+    teams.call(false, false); await tick();
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "short gaps do not add up");
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "", "connection closed for 2 s: the call is over, light removed");
+    // Page messages are untrusted: a call flag that is not a boolean is ignored, and so is the whole message
+    teams.events.message({ origin: "https://teams.microsoft.com", data: { ringLight: { camera: false, call: "yes" } } });
+    teams.events.message({ origin: "https://evil.example", data: { ringLight: { camera: false, call: true } } });
+    await ext.wait(1000);
+    assert.strictEqual(teams.body.style.transform, "", "malformed or foreign call messages ignored");
+    await ext.user({ on: false });
+
+    // Turn on with the camera: the camera starts in a Teams call, and the light follows it like on Meet
+    await ext.user({ auto: true });
+    teams.call(true, true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts in a Teams call: light on");
+    teams.call(false, true); await tick();
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "camera off while the call goes on: light off after 2 s");
+    teams.call(true, true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera on again: light on");
+    // background.js asks every Teams tab too: one with its camera on keeps the light on when a Meet camera stops
+    const meet = ext.tab(2);
+    meet.camera(true); await tick();
+    meet.camera(false); await tick();
+    await ext.wait(3000);
+    assert.strictEqual(ext.storage.on, true, "Meet's camera stops while Teams' is on: light stays on");
+    teams.call(false, false); await tick(); // leaves the call
+    await ext.wait(2000);
+    assert.strictEqual(ext.storage.on, false, "leaving the Teams call: light off");
+    assert.strictEqual(teams.body.style.transform, "", "and no frame left on Teams");
+
+    // The frame holding the call goes away (removed, navigates, frozen) before camera.js says it ended: camera.js repeats
+    // its report every second, so silence ends the call and the camera
+    teams.call(true, true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera starts in a Teams call again: light on");
+    teams.silence();
+    await ext.wait(2000);
+    assert.strictEqual(teams.body.style.transform, "scale(0.85)", "silent for 2 s: still a call (a report may be late)");
+    await ext.wait(1000);
+    assert.strictEqual(ext.storage.on, false, "silent for 3 s without a final false: the camera counts as stopped, light off");
+    await ext.user({ on: true });
+    assert.strictEqual(teams.body.style.transform, "", "and the call counts as over: no frame, although the switch is on");
+    await ext.user({ on: false });
+
+    // On Meet, a call flag means nothing: Meet's calls are found by address and camera.js sends none there
+    meet.location.pathname = "/";
+    meet.poll();
+    await ext.user({ on: true });
+    meet.call(false, true); await tick();
+    meet.poll();
+    assert.strictEqual(meet.body.style.transform, "", "a call message on Meet's home page does not make it a call");
+  }
+
+  // background.js asks a tab whose camera.js went silent: it answers no once the last report is over 2.5 s old, even
+  // before the tab's own timer notices (e.g. a throttled background tab)
+  {
+    const ext = extension();
+    const a = ext.tab(1);
+    await ext.user({ auto: true });
+    a.camera(true); await tick();
+    assert.strictEqual(ext.storage.on, true, "camera on: light on");
+    a.silence();
+    const ask = () => new Promise((answer) => a.onMessage({ cameraQuery: true }, {}, answer));
+    ext.skip(2000);
+    assert.strictEqual(await ask(), true, "last report 2 s old: still the camera");
+    ext.skip(1000);
+    assert.strictEqual(await ask(), false, "last report 3 s old, no final false: no camera");
+  }
+
   // camera.js runs in Meet's own world: it wraps getUserMedia and track and stream clones, and polls the camera tracks
   // (stop() fires no "ended" event and turning a track off fires nothing)
   class FakeTrack {
@@ -674,7 +790,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
     setInterval: (fn, ms) => { assert.strictEqual(ms, 1000, "polls every second"); cameraTick = fn; return 1; },
     clearInterval: (id) => { assert.strictEqual(id, 1, "stops its own timer"); cameraTick = null; },
     // only a same-origin top page may hear it: on a site embedding meet.jit.si, `top` is that site
-    location: { origin: "https://meet.jit.si" },
+    location: { hostname: "meet.jit.si", origin: "https://meet.jit.si" },
     top: { postMessage: (m, target) => posted.push({ ...m.ringLight, target }) },
   }));
   const report = () => {
@@ -719,6 +835,110 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   assert.strictEqual(report().camera, true, "camera started again");
   again.getTracks()[0].stop();
   assert.strictEqual(report().camera, false, "and stopped");
+
+  // camera.js in each app's page (fresh fakes, as every page has its own world). Only where the app is detected by its
+  // call connection (Teams) does it also watch the page's RTCPeerConnections and report "call"; elsewhere only the camera.
+  function cameraPage(hostname) {
+    class Track {
+      constructor(kind) { Object.assign(this, { kind, readyState: "live", enabled: true, muted: false }); }
+      stop() { this.readyState = "ended"; }
+      clone() { return new Track(this.kind); }
+    }
+    class Stream {
+      constructor(tracks) { this.tracks = tracks; }
+      getTracks() { return this.tracks; }
+      clone() { return new Stream(this.tracks.map((t) => new Track(t.kind))); }
+    }
+    class Devices {
+      async getUserMedia(c) { return new Stream([c.video && new Track("video"), c.audio && new Track("audio")].filter(Boolean)); }
+    }
+    class PeerConnection {
+      constructor(config) { Object.assign(this, { config, connectionState: "new", iceConnectionState: "new", signalingState: "stable" }); }
+      close() { Object.assign(this, { connectionState: "closed", iceConnectionState: "closed", signalingState: "closed" }); }
+      static generateCertificate() { return "certificate"; }
+    }
+    const page = { posted: [], timer: null, devices: new Devices(), PeerConnection };
+    page.window = vm.createContext({
+      MediaDevices: Devices, MediaStreamTrack: Track, MediaStream: Stream,
+      RTCPeerConnection: PeerConnection, webkitRTCPeerConnection: PeerConnection, // Chromium still has the prefixed name
+      setInterval: (fn) => ((page.timer = fn), 1),
+      clearInterval: () => (page.timer = null),
+      location: { hostname, origin: `https://${hostname}` },
+      top: { postMessage: (m, target) => page.posted.push({ ...m.ringLight, target }) },
+    });
+    vm.runInContext(fs.readFileSync(__dirname + "/camera.js", "utf8"), page.window);
+    page.report = () => {
+      page.posted.length = 0;
+      page.timer?.();
+      for (const m of page.posted) assert.strictEqual(m.target, `https://${hostname}`, "posted to the page's own origin");
+      const { target, ...m } = page.posted[0] || {};
+      return page.posted[0] && m;
+    };
+    return page;
+  }
+  for (const [host, platform] of Object.entries(PLATFORMS)) {
+    const page = cameraPage(host);
+    const teams = platform.meeting === "call";
+    // e.g. recording a Teams voice message, or testing the microphone in its settings: not a call
+    const mic = await page.devices.getUserMedia({ audio: true });
+    assert.strictEqual(page.timer, null, `${host}: microphone only, no timer and no messages`);
+    mic.getTracks()[0].stop();
+    // e.g. the camera preview in Teams' settings: the camera, but not a call
+    const cam = await page.devices.getUserMedia({ video: true });
+    assert.deepStrictEqual(page.report(), teams ? { camera: true, call: false } : { camera: true },
+      `${host}: camera reported${teams ? ", no call without a connection" : ", nothing else"}`);
+    cam.getTracks()[0].stop();
+    if (!teams) {
+      assert.strictEqual(page.window.RTCPeerConnection, page.PeerConnection, `${host}: RTCPeerConnection left alone`);
+      assert.strictEqual(page.window.webkitRTCPeerConnection, page.PeerConnection, `${host}: webkitRTCPeerConnection left alone`);
+    }
+  }
+  {
+    const page = cameraPage("teams.live.com");
+    const { RTCPeerConnection, webkitRTCPeerConnection } = page.window;
+    // Teams' own code keeps working with the watched constructor
+    const config = { iceServers: [] };
+    const pc = new RTCPeerConnection(config);
+    assert.ok(pc instanceof page.PeerConnection && pc instanceof RTCPeerConnection, "Teams: still a real RTCPeerConnection");
+    assert.strictEqual(pc.config, config, "Teams: its configuration reaches the browser's constructor");
+    assert.strictEqual(RTCPeerConnection.prototype, page.PeerConnection.prototype, "Teams: same prototype");
+    assert.strictEqual(RTCPeerConnection.generateCertificate(), "certificate", "Teams: static methods still there");
+    class Subclass extends RTCPeerConnection {}
+    const sub = new Subclass();
+    assert.ok(sub instanceof Subclass, "Teams: subclasses still work");
+    assert.strictEqual(webkitRTCPeerConnection, RTCPeerConnection, "Teams: the prefixed name is watched too");
+    assert.throws(() => RTCPeerConnection(), TypeError, "Teams: calling it without new still fails, like the browser's");
+
+    assert.deepStrictEqual(page.report(), { camera: false, call: false }, "Teams: connections not connected yet, no call");
+    pc.connectionState = "connected";
+    assert.deepStrictEqual(page.report(), { camera: false, call: true },
+      "Teams: a connected connection is a call, even joined without microphone or camera");
+    const cam = await page.devices.getUserMedia({ video: true });
+    assert.deepStrictEqual(page.report(), { camera: true, call: true }, "Teams: camera on in the call");
+    cam.getTracks()[0].stop();
+    assert.deepStrictEqual(page.report(), { camera: false, call: true }, "Teams: camera off, still in the call");
+    pc.connectionState = "disconnected";
+    assert.deepStrictEqual(page.report(), { camera: false, call: false }, "Teams: connection lost, no call");
+    pc.connectionState = "connected";
+    assert.deepStrictEqual(page.report(), { camera: false, call: true }, "Teams: reconnected");
+    for (const other of [new RTCPeerConnection(), sub]) other.close(); // e.g. Teams' own connection checks
+    pc.close();
+    assert.deepStrictEqual(page.report(), { camera: false, call: false }, "Teams: every connection closed, reported once");
+    assert.strictEqual(page.timer, null, "Teams: then the timer stops");
+
+    // A browser without connectionState: the ICE state says it
+    const old = new webkitRTCPeerConnection();
+    delete old.connectionState;
+    old.iceConnectionState = "checking";
+    assert.deepStrictEqual(page.report(), { camera: false, call: false }, "Teams, ICE checking: no call yet");
+    old.iceConnectionState = "completed";
+    assert.deepStrictEqual(page.report(), { camera: false, call: true }, "Teams, ICE completed: a call");
+    old.iceConnectionState = "connected";
+    assert.deepStrictEqual(page.report(), { camera: false, call: true }, "Teams, ICE connected: a call");
+    old.iceConnectionState = "closed";
+    assert.deepStrictEqual(page.report(), { camera: false, call: false }, "Teams, ICE closed: the call is over");
+    assert.strictEqual(page.timer, null, "Teams: and the timer stops");
+  }
 
   // background.js: shortcut toggles the light; the icon is lit per tab, where Meet applies the light
   let command, storageListener, icon, messageListener;
